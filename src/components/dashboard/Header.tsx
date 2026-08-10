@@ -1,0 +1,996 @@
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+import {
+    Bell,
+    ChevronDown,
+    Command,
+    LogOut,
+    Menu,
+    Moon,
+    Search,
+    Settings,
+    Sun,
+    User,
+    X,
+    Sparkles,
+    UserPlus,
+    CheckCircle2,
+} from "lucide-react";
+import { useTheme } from "next-themes";
+import { AnimatePresence, motion } from "motion/react";
+import { Button } from "@/components/ui/button";
+import { usePathname } from "next/navigation";
+import AnimatedKeyboard from "./AnimatedKeyboard";
+
+type Notification = {
+    id: number;
+    title: string;
+    description: string;
+    time: string;
+    type: "lead" | "ai" | "success";
+    unread: boolean;
+};
+
+type DashboardHeaderProps = {
+    onMenuClick: () => void;
+};
+
+type PageConfig = {
+    label: string;
+    title: string;
+    description: string;
+};
+
+const pageConfig: Record<string, PageConfig> = {
+    "/dashboard": {
+        label: "Workspace",
+        title: "Overview",
+        description: "Here's what's happening with your sales pipeline.",
+    },
+
+    "/dashboard/leads": {
+        label: "Workspace",
+        title: "Leads",
+        description: "Manage and track your leads.",
+    },
+
+    "/dashboard/ai-agent": {
+        label: "AI Tools",
+        title: "AI Agent",
+        description: "Let AI analyze and automate your sales workflow.",
+    },
+
+    "/dashboard/radar": {
+        label: "AI Tools",
+        title: "Radar",
+        description: "Discover opportunities and important sales insights.",
+    },
+
+    "/dashboard/campaigns": {
+        label: "Workspace",
+        title: "Campaigns",
+        description: "Create, manage, and track your campaigns.",
+    },
+
+    "/dashboard/settings": {
+        label: "Workspace",
+        title: "Settings",
+        description: "Manage your AIFlow workspace preferences.",
+    },
+
+    "/dashboard/contacts": {
+        label: "Workspace",
+        title: "Contacts",
+        description: "Manage your contacts and customer relationships.",
+    },
+
+    "/dashboard/analytics": {
+        label: "Insights",
+        title: "Analytics",
+        description: "Track your sales performance and growth.",
+    },
+};
+
+const initialNotifications: Notification[] = [
+    {
+        id: 1,
+        title: "New lead added",
+        description: "Rahul Sharma was added to your leads.",
+        time: "2 minutes ago",
+        type: "lead",
+        unread: true,
+    },
+    {
+        id: 2,
+        title: "AI Agent completed",
+        description: "Lead analysis is ready to review.",
+        time: "15 minutes ago",
+        type: "ai",
+        unread: true,
+    },
+    {
+        id: 3,
+        title: "Campaign completed",
+        description: "128 leads were successfully processed.",
+        time: "1 hour ago",
+        type: "success",
+        unread: true,
+    },
+    {
+        id: 4,
+        title: "Weekly report ready",
+        description: "Your AIFlow performance report is available.",
+        time: "3 hours ago",
+        type: "success",
+        unread: false,
+    },
+];
+
+export default function DashboardHeader({
+    onMenuClick,
+}: DashboardHeaderProps) {
+    const pathname = usePathname();
+    const { theme, setTheme } = useTheme();
+
+    const [mounted, setMounted] = useState(false);
+    const [profileOpen, setProfileOpen] = useState(false);
+    const [searchOpen, setSearchOpen] = useState(false);
+    const [notificationsOpen, setNotificationsOpen] = useState(false);
+
+    const [search, setSearch] = useState("");
+
+    const [notifications, setNotifications] =
+        useState<Notification[]>(initialNotifications);
+
+    const searchInputRef = useRef<HTMLInputElement>(null);
+
+    const notificationsRef = useRef<HTMLDivElement>(null);
+
+    const profileRef = useRef<HTMLDivElement>(null);
+
+    /*
+     * Dynamic page information
+     */
+    const currentPage =
+        pageConfig[pathname] || {
+            label: "Workspace",
+            title: "Dashboard",
+            description: "Manage your AIFlow workspace.",
+        };
+
+    const isDashboardHome = pathname === "/dashboard";
+
+    const unreadCount = notifications.filter(
+        (notification) => notification.unread
+    ).length;
+
+    /*
+     * Theme hydration
+     */
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    /*
+     * Keyboard shortcuts
+     *
+     * Ctrl + K → Search
+     * Escape → Close
+     */
+    useEffect(() => {
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (
+                event.ctrlKey &&
+                event.key.toLowerCase() === "k"
+            ) {
+                event.preventDefault();
+
+                setSearchOpen(true);
+                setProfileOpen(false);
+                setNotificationsOpen(false);
+            }
+
+            if (event.key === "Escape") {
+                setSearchOpen(false);
+                setProfileOpen(false);
+                setNotificationsOpen(false);
+            }
+        };
+
+        window.addEventListener("keydown", handleKeyDown);
+
+        return () => {
+            window.removeEventListener("keydown", handleKeyDown);
+        };
+    }, []);
+
+    /*
+     * Focus search
+     */
+    useEffect(() => {
+        if (searchOpen) {
+            const timer = setTimeout(() => {
+                searchInputRef.current?.focus();
+            }, 180);
+
+            return () => clearTimeout(timer);
+        }
+    }, [searchOpen]);
+
+    /*
+     * Outside click
+     */
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            const target = event.target as Node;
+
+            if (
+                notificationsRef.current &&
+                !notificationsRef.current.contains(target)
+            ) {
+                setNotificationsOpen(false);
+            }
+
+            if (
+                profileRef.current &&
+                !profileRef.current.contains(target)
+            ) {
+                setProfileOpen(false);
+            }
+        };
+
+        document.addEventListener(
+            "mousedown",
+            handleClickOutside
+        );
+
+        return () => {
+            document.removeEventListener(
+                "mousedown",
+                handleClickOutside
+            );
+        };
+    }, []);
+
+    /*
+     * Open search
+     */
+    const openSearch = () => {
+        setSearchOpen(true);
+        setProfileOpen(false);
+        setNotificationsOpen(false);
+    };
+
+    /*
+     * Close search
+     */
+    const closeSearch = () => {
+        setSearchOpen(false);
+    };
+
+    /*
+     * Execute search
+     */
+    const handleSearch = (value: string) => {
+        const trimmedValue = value.trim();
+
+        if (!trimmedValue) return;
+
+        console.log("AIFlow Search:", trimmedValue);
+
+        // Later:
+        // router.push(`/dashboard/search?q=${encodeURIComponent(trimmedValue)}`);
+
+        closeSearch();
+    };
+
+    /*
+     * Mark one notification as read
+     */
+    const markAsRead = (id: number) => {
+        setNotifications((current) =>
+            current.map((notification) =>
+                notification.id === id
+                    ? {
+                        ...notification,
+                        unread: false,
+                    }
+                    : notification
+            )
+        );
+    };
+
+    /*
+     * Mark all notifications as read/unread
+     */
+    const toggleAllRead = (checked: boolean) => {
+        setNotifications((current) =>
+            current.map((notification) => ({
+                ...notification,
+                unread: !checked,
+            }))
+        );
+    };
+
+    /*
+     * Notification icon
+     */
+    const getNotificationIcon = (
+        type: Notification["type"]
+    ) => {
+        if (type === "lead") {
+            return (
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-500/10 text-blue-500">
+                    <UserPlus className="h-4 w-4" />
+                </div>
+            );
+        }
+
+        if (type === "ai") {
+            return (
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-violet-500/10 text-violet-500">
+                    <Sparkles className="h-4 w-4" />
+                </div>
+            );
+        }
+
+        return (
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-500">
+                <CheckCircle2 className="h-4 w-4" />
+            </div>
+        );
+    };
+
+    return (
+        <>
+            {/* ================================================= */}
+            {/* HEADER */}
+            {/* ================================================= */}
+
+            <header className="sticky top-0 z-40 border-b border-border/70     
+                 border-black/[0.08] dark:border-white/[0.10]
+                bg-black/[0.025] dark:bg-white/[0.045]
+                backdrop-blur-2xl
+                backdrop-saturate-150
+                shadow-[0_8px_40px_-20px_hsl(var(--foreground)/0.25)]">
+                <div className="flex h-16 items-center justify-between gap-3 px-4 sm:h-20 sm:px-6 lg:px-8">
+
+                    {/* LEFT */}
+                    <div className="flex min-w-0 items-center gap-3">
+
+                        {/* Mobile Menu */}
+                        <button
+                            type="button"
+                            onClick={onMenuClick}
+                            className="group relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-border text-muted-foreground transition-colors hover:bg-muted hover:text-foreground lg:hidden"
+                            aria-label="Open navigation"
+                        >
+                            <Menu className="h-5 w-5" />
+
+                            <span className="pointer-events-none absolute left-0 top-full z-50 mt-2 whitespace-nowrap rounded-lg border border-border bg-popover px-3 py-1.5 text-[11px] font-medium text-popover-foreground opacity-0 shadow-lg transition-all duration-200 group-hover:translate-y-1 group-hover:opacity-100">
+                                Open navigation
+                            </span>
+                        </button>
+
+                        {/* Dynamic Page Heading */}
+                        <div className="min-w-0">
+                            <p className="hidden text-xs font-medium text-muted-foreground sm:block">
+                                {currentPage.label}
+                            </p>
+
+                            <h1 className="truncate text-lg font-normal tracking-tight sm:mt-1 sm:text-xl">
+                                {currentPage.title}
+                            </h1>
+                        </div>
+                    </div>
+
+                    {/* RIGHT */}
+                    <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+
+                        {/* DESKTOP SEARCH */}
+                        <button
+                            type="button"
+                            onClick={openSearch}
+                            className="group relative hidden h-10 w-56 items-center gap-3 rounded-xl border border-border bg-background px-3 text-sm text-muted-foreground transition-all hover:border-primary/40 hover:bg-muted xl:flex"
+                            aria-label="Open search"
+                        >
+                            <Search className="h-4 w-4 shrink-0" />
+
+                            <span className="flex-1 text-left">
+                                Search...
+                            </span>
+
+                            <kbd className="flex items-center gap-1 rounded-md border border-border px-1.5 py-0.5 text-[10px]">
+                                <Command className="h-2.5 w-2.5" />
+                                K
+                            </kbd>
+
+                            <span className="pointer-events-none absolute left-1/2 top-full z-50 mt-2 -translate-x-1/2 whitespace-nowrap rounded-lg border border-border bg-popover px-3 py-1.5 text-[11px] font-medium text-popover-foreground opacity-0 shadow-lg transition-all duration-200 group-hover:translate-y-1 group-hover:opacity-100">
+                                Search anything · Ctrl + K
+                            </span>
+                        </button>
+
+                        {/* MOBILE/TABLET SEARCH */}
+                        <button
+                            type="button"
+                            onClick={openSearch}
+                            className="group relative flex h-10 w-10 items-center justify-center rounded-xl border border-border text-muted-foreground transition-colors hover:bg-muted hover:text-foreground xl:hidden"
+                            aria-label="Search"
+                        >
+                            <Search className="h-4 w-4" />
+
+                            <span className="pointer-events-none absolute right-0 top-full z-50 mt-2 whitespace-nowrap rounded-lg border border-border bg-popover px-3 py-1.5 text-[11px] font-medium text-popover-foreground opacity-0 shadow-lg transition-all duration-200 group-hover:translate-y-1 group-hover:opacity-100">
+                                Search · Ctrl + K
+                            </span>
+                        </button>
+
+                        {/* THEME */}
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() =>
+                                setTheme(
+                                    theme === "dark"
+                                        ? "light"
+                                        : "dark"
+                                )
+                            }
+                            className="group relative h-10 w-10 rounded-xl border border-border text-muted-foreground transition-all hover:bg-muted hover:text-foreground"
+                            aria-label={
+                                mounted
+                                    ? theme === "dark"
+                                        ? "Switch to light mode"
+                                        : "Switch to dark mode"
+                                    : "Toggle theme"
+                            }
+                        >
+                            {mounted ? (
+                                theme === "dark" ? (
+                                    <Sun className="h-4 w-4" />
+                                ) : (
+                                    <Moon className="h-4 w-4" />
+                                )
+                            ) : (
+                                <Moon className="h-4 w-4" />
+                            )}
+
+                            <span className="pointer-events-none absolute right-0 top-full z-50 mt-2 whitespace-nowrap rounded-lg border border-border bg-popover px-3 py-1.5 text-[11px] font-medium text-popover-foreground opacity-0 shadow-lg transition-all duration-200 group-hover:translate-y-1 group-hover:opacity-100">
+                                {mounted
+                                    ? theme === "dark"
+                                        ? "Light mode"
+                                        : "Dark mode"
+                                    : "Toggle theme"}
+                            </span>
+                        </Button>
+
+                        {/* NOTIFICATIONS */}
+                        <div
+                            ref={notificationsRef}
+                            className="relative"
+                        >
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setNotificationsOpen(
+                                        (open) => !open
+                                    );
+                                    setProfileOpen(false);
+                                    setSearchOpen(false);
+                                }}
+                                className="group relative flex h-10 w-10 items-center justify-center rounded-xl border border-border text-muted-foreground transition-all hover:bg-muted hover:text-foreground"
+                                aria-label="Notifications"
+                                aria-expanded={notificationsOpen}
+                            >
+                                <Bell className="h-4 w-4" />
+
+                                {unreadCount > 0 && (
+                                    <span className="absolute -right-1 -top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-primary px-1 text-[9px] font-semibold text-primary-foreground ring-2 ring-background">
+                                        {unreadCount > 9
+                                            ? "9+"
+                                            : unreadCount}
+                                    </span>
+                                )}
+
+                                <span className="pointer-events-none absolute right-0 top-full z-50 mt-2 whitespace-nowrap rounded-lg border border-border bg-popover px-3 py-1.5 text-[11px] font-medium text-popover-foreground opacity-0 shadow-lg transition-all duration-200 group-hover:translate-y-1 group-hover:opacity-100">
+                                    Notifications
+                                </span>
+                            </button>
+
+                            <AnimatePresence>
+                                {notificationsOpen && (
+                                    <motion.div
+                                        initial={{
+                                            opacity: 0,
+                                            y: -8,
+                                            scale: 0.97,
+                                        }}
+                                        animate={{
+                                            opacity: 1,
+                                            y: 0,
+                                            scale: 1,
+                                        }}
+                                        exit={{
+                                            opacity: 0,
+                                            y: -8,
+                                            scale: 0.97,
+                                        }}
+                                        transition={{
+                                            duration: 0.18,
+                                            ease: "easeOut",
+                                        }}
+                                        className="fixed left-4 right-4 top-[70px] z-50 overflow-hidden rounded-2xl border border-border bg-popover shadow-2xl sm:absolute sm:left-auto sm:right-0 sm:top-14 sm:w-[380px]"
+                                    >
+                                        <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-4">
+                                            <div>
+                                                <h3 className="text-sm font-semibold">
+                                                    Notifications
+                                                </h3>
+
+                                                <p className="mt-0.5 text-[11px] text-muted-foreground">
+                                                    {unreadCount > 0
+                                                        ? `${unreadCount} unread notification${unreadCount > 1
+                                                            ? "s"
+                                                            : ""
+                                                        }`
+                                                        : "You're all caught up"}
+                                                </p>
+                                            </div>
+
+                                            <label className="flex shrink-0 cursor-pointer items-center gap-2 text-[11px] font-medium text-muted-foreground">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={unreadCount === 0}
+                                                    onChange={(event) =>
+                                                        toggleAllRead(
+                                                            event.target.checked
+                                                        )
+                                                    }
+                                                    className="h-3.5 w-3.5 cursor-pointer accent-primary"
+                                                    aria-label="Mark all notifications as read"
+                                                />
+
+                                                <span className="hidden sm:inline">
+                                                    Mark all read
+                                                </span>
+                                            </label>
+                                        </div>
+
+                                        <div className="max-h-[55vh] overflow-y-auto p-2 sm:max-h-[360px]">
+                                            {notifications.length > 0 ? (
+                                                <div className="space-y-1">
+                                                    {notifications.map(
+                                                        (notification) => (
+                                                            <button
+                                                                key={notification.id}
+                                                                type="button"
+                                                                onClick={() =>
+                                                                    markAsRead(
+                                                                        notification.id
+                                                                    )
+                                                                }
+                                                                className={`group flex w-full items-start gap-3 rounded-xl p-3 text-left transition-colors hover:bg-muted ${notification.unread
+                                                                        ? "bg-primary/[0.035]"
+                                                                        : ""
+                                                                    }`}
+                                                            >
+                                                                {getNotificationIcon(
+                                                                    notification.type
+                                                                )}
+
+                                                                <div className="min-w-0 flex-1">
+                                                                    <div className="flex items-start justify-between gap-2">
+                                                                        <p
+                                                                            className={`text-xs ${notification.unread
+                                                                                    ? "font-semibold"
+                                                                                    : "font-medium"
+                                                                                }`}
+                                                                        >
+                                                                            {notification.title}
+                                                                        </p>
+
+                                                                        {notification.unread && (
+                                                                            <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
+                                                                        )}
+                                                                    </div>
+
+                                                                    <p className="mt-1 text-[11px] leading-4 text-muted-foreground">
+                                                                        {notification.description}
+                                                                    </p>
+
+                                                                    <p className="mt-1.5 text-[10px] text-muted-foreground/70">
+                                                                        {notification.time}
+                                                                    </p>
+                                                                </div>
+                                                            </button>
+                                                        )
+                                                    )}
+                                                </div>
+                                            ) : (
+                                                <div className="py-10 text-center">
+                                                    <Bell className="mx-auto h-6 w-6 text-muted-foreground/50" />
+
+                                                    <p className="mt-3 text-sm font-medium">
+                                                        No notifications
+                                                    </p>
+
+                                                    <p className="mt-1 text-xs text-muted-foreground">
+                                                        You're all caught up.
+                                                    </p>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        <div className="border-t border-border p-2">
+                                            <button
+                                                type="button"
+                                                className="flex w-full items-center justify-center rounded-xl py-2.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                                            >
+                                                View all notifications
+                                            </button>
+                                        </div>
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
+                        </div>
+
+                        {/* PROFILE */}
+                        <div
+                            ref={profileRef}
+                            className="relative ml-0.5"
+                        >
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setProfileOpen(
+                                        (open) => !open
+                                    );
+                                    setNotificationsOpen(false);
+                                    setSearchOpen(false);
+                                }}
+                                className="group flex h-10 items-center gap-2 rounded-xl border border-transparent px-1.5 transition-colors hover:border-border hover:bg-muted sm:px-2"
+                                aria-expanded={profileOpen}
+                                aria-label="Account menu"
+                            >
+                                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
+                                    LS
+                                </div>
+
+                                <div className="hidden text-left lg:block">
+                                    <p className="text-xs font-medium">
+                                        AIFlow User
+                                    </p>
+
+                                    <p className="text-[10px] text-muted-foreground">
+                                        Free plan
+                                    </p>
+                                </div>
+
+                                <ChevronDown
+                                    className={`hidden h-4 w-4 text-muted-foreground transition-transform lg:block ${profileOpen
+                                            ? "rotate-180"
+                                            : ""
+                                        }`}
+                                />
+
+                                {!profileOpen && (
+                                    <span className="pointer-events-none absolute right-0 top-full z-50 mt-2 whitespace-nowrap rounded-lg border border-border bg-popover px-3 py-1.5 text-[11px] font-medium text-popover-foreground opacity-0 shadow-lg transition-all duration-200 group-hover:translate-y-1 group-hover:opacity-100">
+                                        Account menu
+                                    </span>
+                                )}
+                            </button>
+
+                            <AnimatePresence>
+                                {profileOpen && (
+                                    <motion.div
+                                        initial={{
+                                            opacity: 0,
+                                            y: -8,
+                                            scale: 0.96,
+                                        }}
+                                        animate={{
+                                            opacity: 1,
+                                            y: 0,
+                                            scale: 1,
+                                        }}
+                                        exit={{
+                                            opacity: 0,
+                                            y: -8,
+                                            scale: 0.96,
+                                        }}
+                                        transition={{
+                                            duration: 0.18,
+                                            ease: "easeOut",
+                                        }}
+                                        className="absolute right-0 top-12 z-50 w-56 overflow-hidden rounded-2xl border border-border bg-popover p-1.5 shadow-xl"
+                                    >
+                                        <div className="border-b border-border px-3 py-3">
+                                            <p className="text-xs font-semibold">
+                                                AIFlow User
+                                            </p>
+
+                                            <p className="mt-1 truncate text-[10px] text-muted-foreground">
+                                                user@aiflow.com
+                                            </p>
+                                        </div>
+
+                                        <button
+                                            type="button"
+                                            className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                                        >
+                                            <User className="h-4 w-4" />
+                                            <span>Profile</span>
+                                        </button>
+
+                                        <button
+                                            type="button"
+                                            className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                                        >
+                                            <Settings className="h-4 w-4" />
+                                            <span>Settings</span>
+                                        </button>
+
+                                        <div className="my-1 h-px bg-border" />
+
+                                        <button
+                                            type="button"
+                                            className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-destructive"
+                                        >
+                                            <LogOut className="h-4 w-4" />
+                                            <span>Sign out</span>
+                                        </button>
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            {/* ================================================= */}
+            {/* DASHBOARD HOME WELCOME */}
+            {/* ================================================= */}
+
+            {isDashboardHome && (
+                <div className="mb-6 px-4 pt-4 sm:px-6 lg:px-8 relative z-1">
+                    <h2 className="text-4xl font-bold tracking-tight">
+                        Welcome back, Lakhbir 👋
+                    </h2>
+
+                    <p className="mt-1 text-sm text-muted-foreground">
+                        {currentPage.description}
+                    </p>
+                </div>
+            )}
+
+            {/* ================================================= */}
+            {/* OTHER PAGE DESCRIPTION */}
+            {/* ================================================= */}
+
+            {!isDashboardHome && (
+                <div className="px-4 pt-4 sm:px-6 lg:px-8">
+                    <p className="text-sm text-muted-foreground">
+                        {currentPage.description}
+                    </p>
+                </div>
+            )}
+
+            {/* ================================================= */}
+            {/* SEARCH MODAL + ANIMATED KEYBOARD */}
+            {/* ================================================= */}
+
+            <AnimatePresence>
+                {searchOpen && (
+                    <>
+                        {/* BACKDROP */}
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            onClick={closeSearch}
+                            className="fixed inset-0 z-[90] bg-black/40 backdrop-blur-sm"
+                        />
+
+                        {/* SEARCH CONTAINER */}
+                        <motion.div
+                            initial={{
+                                opacity: 0,
+                                y: -25,
+                                scale: 0.96,
+                            }}
+                            animate={{
+                                opacity: 1,
+                                y: 0,
+                                scale: 1,
+                            }}
+                            exit={{
+                                opacity: 0,
+                                y: -20,
+                                scale: 0.96,
+                            }}
+                            transition={{
+                                duration: 0.22,
+                                ease: [0.22, 1, 0.36, 1],
+                            }}
+                            className="
+                fixed
+                left-4
+                right-4
+                top-[8%]
+                z-[100]
+                max-h-[84vh]
+                overflow-y-auto
+                rounded-2xl
+                border
+                border-border
+                bg-background
+                shadow-2xl
+                sm:left-1/2
+                sm:right-auto
+                sm:top-[10%]
+                sm:w-[calc(100%-32px)]
+                sm:max-w-3xl
+                sm:-translate-x-1/2
+              "
+                        >
+                            {/* SEARCH INPUT */}
+                            <div className="sticky top-0 z-20 flex h-16 items-center gap-3 border-b border-border bg-background/95 px-4 backdrop-blur-xl sm:px-5">
+                                <Search className="h-5 w-5 shrink-0 text-muted-foreground" />
+
+                                <input
+                                    ref={searchInputRef}
+                                    type="text"
+                                    value={search}
+                                    onChange={(event) =>
+                                        setSearch(event.target.value)
+                                    }
+                                    placeholder="Search anything..."
+                                    className="h-full min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+                                    autoComplete="off"
+                                    autoFocus
+                                />
+
+                                <button
+                                    type="button"
+                                    onClick={closeSearch}
+                                    className="group relative flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                                    aria-label="Close search"
+                                >
+                                    <X className="h-4 w-4" />
+
+                                    <span className="pointer-events-none absolute right-0 top-full z-50 mt-2 whitespace-nowrap rounded-lg border border-border bg-popover px-3 py-1.5 text-[11px] font-medium text-popover-foreground opacity-0 shadow-lg transition-all group-hover:translate-y-1 group-hover:opacity-100">
+                                        Close · Esc
+                                    </span>
+                                </button>
+                            </div>
+
+                            {/* KEYBOARD */}
+                            <div className="border-b border-border p-3 sm:p-4">
+                                <AnimatedKeyboard
+                                    value={search}
+                                    onChange={setSearch}
+                                    onEnter={handleSearch}
+                                    onClose={closeSearch}
+                                    showSearch={false}
+                                    sounds={{
+                                        key: "/KeyboardSounds/key.mp3",
+                                        number: "/KeyboardSounds/Number.mp3",
+                                        space: "/KeyboardSounds/Spacebar.mp3",
+                                        enter: "/KeyboardSounds/Enter.mp3",
+                                        backspace: "/KeyboardSounds/Backspace.mp3",
+                                        modifier: "/KeyboardSounds/Modifiy.mp3",
+                                    }}
+                                />
+                            </div>
+
+                            {/* SEARCH CONTENT */}
+                            <div className="p-4 sm:p-5">
+                                <AnimatePresence mode="wait">
+                                    {search ? (
+                                        <motion.div
+                                            key="results"
+                                            initial={{
+                                                opacity: 0,
+                                                y: 8,
+                                            }}
+                                            animate={{
+                                                opacity: 1,
+                                                y: 0,
+                                            }}
+                                            exit={{
+                                                opacity: 0,
+                                                y: -8,
+                                            }}
+                                            className="py-6 text-center"
+                                        >
+                                            <Search className="mx-auto h-6 w-6 text-muted-foreground" />
+
+                                            <p className="mt-3 text-sm font-medium">
+                                                Searching for "{search}"
+                                            </p>
+
+                                            <p className="mt-1 text-xs text-muted-foreground">
+                                                Press Enter to search.
+                                            </p>
+                                        </motion.div>
+                                    ) : (
+                                        <motion.div
+                                            key="quick-actions"
+                                            initial={{
+                                                opacity: 0,
+                                                y: 8,
+                                            }}
+                                            animate={{
+                                                opacity: 1,
+                                                y: 0,
+                                            }}
+                                            exit={{
+                                                opacity: 0,
+                                                y: -8,
+                                            }}
+                                        >
+                                            <p className="px-2 pb-2 text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground">
+                                                Quick actions
+                                            </p>
+
+                                            <div className="space-y-1">
+                                                <button
+                                                    type="button"
+                                                    className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left transition-colors hover:bg-muted"
+                                                >
+                                                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                                                        <User className="h-4 w-4" />
+                                                    </div>
+
+                                                    <div>
+                                                        <p className="text-sm font-medium">
+                                                            Find leads
+                                                        </p>
+
+                                                        <p className="text-xs text-muted-foreground">
+                                                            Search your leads and contacts
+                                                        </p>
+                                                    </div>
+                                                </button>
+
+                                                <button
+                                                    type="button"
+                                                    className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left transition-colors hover:bg-muted"
+                                                >
+                                                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                                                        <Settings className="h-4 w-4" />
+                                                    </div>
+
+                                                    <div>
+                                                        <p className="text-sm font-medium">
+                                                            Open settings
+                                                        </p>
+
+                                                        <p className="text-xs text-muted-foreground">
+                                                            Manage your AIFlow workspace
+                                                        </p>
+                                                    </div>
+                                                </button>
+                                            </div>
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
+                            </div>
+
+                            {/* FOOTER */}
+                            <div className="flex items-center justify-between border-t border-border bg-muted/30 px-4 py-3 sm:px-5">
+                                <span className="text-[10px] text-muted-foreground">
+                                    Type on your keyboard · Enter to search
+                                </span>
+
+                                <span className="text-[10px] text-muted-foreground">
+                                    AIFlow Search
+                                </span>
+                            </div>
+                        </motion.div>
+                    </>
+                )}
+            </AnimatePresence>
+        </>
+    );
+}
