@@ -11,7 +11,8 @@ import {
   Sparkles,
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
-import { HotLeadsOffcanvas } from "./HotLeadsOffcanvas";
+
+import { Button } from "@base-ui/react";
 
 export type HotLead = {
   id: number;
@@ -154,12 +155,19 @@ export const hotLeads: HotLead[] = [
   },
 ];
 
-export function HotLeadCarousel() {
+type HotLeadCarouselProps = {
+  onViewAllLeads: () => void;
+};
+
+export function HotLeadCarousel({
+  onViewAllLeads,
+}: HotLeadCarouselProps) {
   const [activeIndex, setActiveIndex] = useState(0);
-  const [showAllLeads, setShowAllLeads] = useState(false);
+  
 
   const hasMultipleLeads = hotLeads.length > 1;
   const lead = hotLeads[activeIndex];
+
 
   /*
    * =========================================================
@@ -442,30 +450,24 @@ export function HotLeadCarousel() {
                   </span>
                 </div>
 
-                <button
+                <Button
                   type="button"
-                  onClick={() => setShowAllLeads(true)}
+                  onClick={onViewAllLeads}
                   className="group inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-[9px] font-semibold text-primary-foreground shadow-sm transition-all hover:gap-2 hover:shadow-md"
                 >
                   View all hot leads
 
                   <ArrowRight className="h-3 w-3 transition-transform group-hover:translate-x-0.5" />
-                </button>
+                </Button>
               </div>
             </div>
           </div>
         </div>
       </motion.div>
 
-      {/* =====================================================
-          OFFCANVAS
-      ====================================================== */}
 
-      <HotLeadsOffcanvas
-        open={showAllLeads}
-        onClose={() => setShowAllLeads(false)}
-        leads={hotLeads}
-      />
+
+
     </>
   );
 }

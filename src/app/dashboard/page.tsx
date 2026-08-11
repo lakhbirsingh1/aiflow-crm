@@ -1,60 +1,33 @@
 "use client";
 
 import { useState } from "react";
-import Header from "@/components/dashboard/Header";
-import Sidebar from "@/components/dashboard/Sidebar";
 import Cards from "@/components/dashboard/Cards";
 import AISalesIntelligence from "@/components/dashboard/AISalesIntelligence";
 import SalesOverviewBento from "@/components/dashboard/SalesOverview";
 import BgDots from "@/BgDots";
-
+import { HotLeadsOffcanvas } from "@/components/dashboard/HotLeadsOffcanvas";
+import { hotLeads } from "@/components/dashboard/HotLeadCarousel";
 
 export default function DashboardPage() {
-  const [mobileSidebarOpen, setMobileSidebarOpen] =
-    useState(false);
-
-  const [sidebarCollapsed, setSidebarCollapsed] =
-    useState(false);
+  const [showAllLeads, setShowAllLeads] = useState(false);
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* ================================================= */}
-      {/* SIDEBAR */}
-      {/* ================================================= */}
+    <main className="p-6">
+      <Cards />
 
-      <Sidebar
-        mobileOpen={mobileSidebarOpen}
-        onMobileClose={() => setMobileSidebarOpen(false)}
-        collapsed={sidebarCollapsed}
-        onCollapsedChange={setSidebarCollapsed}
-   
+      <AISalesIntelligence
+        onViewAllLeads={() => setShowAllLeads(true)}
       />
 
-      {/* ================================================= */}
-      {/* MAIN CONTENT */}
-      {/* ================================================= */}
+      <SalesOverviewBento />
 
-      <div
-        className={`min-h-screen transition-[padding] duration-200 ${
-          sidebarCollapsed
-            ? "lg:pl-[76px]"
-            : "lg:pl-64"
-        }`}
-      >
-        {/* Header */}
-        <Header
-          onMenuClick={() => setMobileSidebarOpen(true)}
-        />
+      <BgDots />
 
-        {/* Page Content */}
-        <main className="p-6">
-          {/* Tumhara existing dashboard content yahan rahega */}
-          <Cards />
-          <AISalesIntelligence />
-          <SalesOverviewBento />
-          <BgDots />
-        </main>
-      </div>
-    </div>
+      <HotLeadsOffcanvas
+        open={showAllLeads}
+        onClose={() => setShowAllLeads(false)}
+        leads={hotLeads}
+      />
+    </main>
   );
 }

@@ -5,6 +5,7 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type RefObject,
 } from "react";
@@ -88,8 +89,209 @@ export default function AnimatedKeyboard({
   }, [value]);
 
   /* =====================================================
-     PLAY SOUND
+     AUDIO ENGINE
+     Decode sounds ahead of time with Web Audio. This avoids
+     the first-key delay caused by creating/decoding an
+     HTMLAudioElement only when the key is pressed.
   ====================================================== */
+
+  const audioContextRef = useRef<AudioContext | null>(null);
+
+  const audioBuffersRef = useRef<
+    Partial<Record<SoundType, AudioBuffer>>
+  >({});
+
+  const fallbackAudioRef = useRef<
+    Record<SoundType, HTMLAudioElement[]>
+  >({
+    key: [],
+    number: [],
+    space: [],
+    enter: [],
+    backspace: [],
+    modifier: [],
+  });
+
+  const audioIndexRef = useRef<
+    Record<SoundType, number>
+  >({
+    key: 0,
+    number: 0,
+    space: 0,
+    enter: 0,
+    backspace: 0,
+    modifier: 0,
+  });
+
+  /*
+   * Create the AudioContext and start decoding as soon as the
+   * keyboard component mounts. The context may remain suspended
+   * until the browser receives a user gesture, but decoding can
+   * still be prepared in advance.
+   */
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const AudioContextClass =
+      window.AudioContext ||
+      (
+        window as typeof window & {
+          webkitAudioContext?: typeof AudioContext;
+        }
+      ).webkitAudioContext;
+
+    if (!AudioContextClass) return;
+
+    const context = new AudioContextClass();
+
+    audioContextRef.current = context;
+    audioBuffersRef.current = {};
+
+    const types: SoundType[] = [
+      "key",
+      "number",
+      "space",
+      "enter",
+      "backspace",
+      "modifier",
+    ];
+
+    let cancelled = false;
+
+    const prepareSounds = async () => {
+      await Promise.all(
+        types.map(async (type) => {
+          const src = sounds[type];
+
+          if (!src) return;
+
+          try {
+            const response = await fetch(src, {
+              cache: "force-cache",
+            });
+
+            if (!response.ok) {
+              throw new Error(
+                `Failed to load keyboard sound: ${src}`
+              );
+            }
+
+            const arrayBuffer =
+              await response.arrayBuffer();
+
+            const buffer =
+              await context.decodeAudioData(
+                arrayBuffer
+              );
+
+            if (!cancelled) {
+              audioBuffersRef.current[type] =
+                buffer;
+            }
+          } catch {
+            /*
+             * HTMLAudio fallback below will still handle
+             * the sound if Web Audio decoding fails.
+             */
+          }
+        })
+      );
+    };
+
+    prepareSounds();
+
+    return () => {
+      cancelled = true;
+
+      Object.values(
+        fallbackAudioRef.current
+      ).forEach((pool) => {
+        pool.forEach((audio) => {
+          audio.pause();
+          audio.removeAttribute("src");
+          audio.load();
+        });
+      });
+
+      fallbackAudioRef.current = {
+        key: [],
+        number: [],
+        space: [],
+        enter: [],
+        backspace: [],
+        modifier: [],
+      };
+
+      if (audioContextRef.current) {
+        audioContextRef.current.close().catch(() => {});
+      }
+
+      audioContextRef.current = null;
+      audioBuffersRef.current = {};
+    };
+  }, [
+    sounds.key,
+    sounds.number,
+    sounds.space,
+    sounds.enter,
+    sounds.backspace,
+    sounds.modifier,
+  ]);
+
+  /*
+   * Small fallback pool for cases where a sound has not finished
+   * decoding yet or Web Audio is unavailable.
+   */
+  useEffect(() => {
+    const types: SoundType[] = [
+      "key",
+      "number",
+      "space",
+      "enter",
+      "backspace",
+      "modifier",
+    ];
+
+    types.forEach((type) => {
+      const src = sounds[type];
+
+      if (!src) return;
+
+      fallbackAudioRef.current[type] =
+        Array.from({ length: 3 }, () => {
+          const audio = new Audio(src);
+
+          audio.preload = "auto";
+          audio.volume = 0.45;
+          audio.load();
+
+          return audio;
+        });
+
+      audioIndexRef.current[type] = 0;
+    });
+
+    return () => {
+      types.forEach((type) => {
+        fallbackAudioRef.current[type].forEach(
+          (audio) => {
+            audio.pause();
+            audio.removeAttribute("src");
+            audio.load();
+          }
+        );
+
+        fallbackAudioRef.current[type] = [];
+      });
+    };
+  }, [
+    sounds.key,
+    sounds.number,
+    sounds.space,
+    sounds.enter,
+    sounds.backspace,
+    sounds.modifier,
+  ]);
 
   const playKeySound = useCallback(
     (type: SoundType) => {
@@ -98,18 +300,73 @@ export default function AnimatedKeyboard({
       if (!src) return;
 
       try {
+        const context =
+          audioContextRef.current;
+
+        const buffer =
+          audioBuffersRef.current[type];
+
+        if (context && buffer) {
+          /*
+           * Resume inside the actual user interaction.
+           * This is important for Chrome/Edge autoplay policy.
+           */
+          if (context.state === "suspended") {
+            context.resume().catch(() => {});
+          }
+
+          const source =
+            context.createBufferSource();
+
+          const gain =
+            context.createGain();
+
+          source.buffer = buffer;
+
+          gain.gain.value = 0.45;
+
+          source.connect(gain);
+          gain.connect(context.destination);
+
+          source.start(0);
+
+          return;
+        }
+
+        /*
+         * Decode is not ready yet — use the preloaded HTMLAudio
+         * fallback so the interaction still produces a sound.
+         */
+        const pool =
+          fallbackAudioRef.current[type];
+
+        if (pool.length) {
+          const index =
+            audioIndexRef.current[type] %
+            pool.length;
+
+          const audio = pool[index];
+
+          audioIndexRef.current[type] =
+            (index + 1) % pool.length;
+
+          audio.pause();
+          audio.currentTime = 0;
+
+          audio.play().catch(() => {});
+
+          return;
+        }
+
+        /*
+         * Last-resort fallback.
+         */
         const audio = new Audio(src);
 
         audio.volume = 0.45;
-        audio.currentTime = 0;
+        audio.preload = "auto";
 
-        const promise = audio.play();
-
-        if (promise) {
-          promise.catch(() => {
-            // Browser may block audio before interaction.
-          });
-        }
+        audio.play().catch(() => {});
       } catch {
         // Ignore audio errors.
       }
@@ -194,55 +451,58 @@ export default function AnimatedKeyboard({
   ====================================================== */
 
   const handleBackspace = useCallback(() => {
-    const input = inputRef?.current;
+    const input =
+      inputRef?.current ??
+      (document.activeElement instanceof HTMLInputElement
+        ? document.activeElement
+        : null);
+
+    // Always read the latest value from the input when possible.
+    // This avoids stale React state when Ctrl+A/native selection
+    // has just happened.
+    const currentText =
+      input?.value ?? text;
 
     if (input) {
       const start =
-        input.selectionStart ?? text.length;
+        input.selectionStart ?? currentText.length;
 
       const end =
-        input.selectionEnd ?? text.length;
+        input.selectionEnd ?? currentText.length;
 
-      /*
-       * Delete selection.
-       */
-
+      // Selected text — including native Ctrl+A selection.
       if (start !== end) {
         const nextValue =
-          text.slice(0, start) +
-          text.slice(end);
+          currentText.slice(0, start) +
+          currentText.slice(end);
 
         updateValue(nextValue);
 
         requestAnimationFrame(() => {
           input.focus();
-
-          input.setSelectionRange(
-            start,
-            start
-          );
+          input.setSelectionRange(start, start);
         });
 
         return;
       }
 
-      /*
-       * Delete previous character.
-       */
-
+      // Normal Backspace: remove the character immediately
+      // before the caret.
       if (start > 0) {
         const nextValue =
-          text.slice(0, start - 1) +
-          text.slice(start);
+          currentText.slice(0, start - 1) +
+          currentText.slice(start);
 
         updateValue(nextValue);
 
         requestAnimationFrame(() => {
           input.focus();
 
+          const cursor = start - 1;
+
           input.setSelectionRange(
-            start - 1,
-            start - 1
+            cursor,
+            cursor
           );
         });
       }
@@ -250,11 +510,12 @@ export default function AnimatedKeyboard({
       return;
     }
 
-    /*
-     * Fallback.
-     */
-
-    updateValue(text.slice(0, -1));
+    // Fallback when no input ref exists.
+    if (currentText.length > 0) {
+      updateValue(
+        currentText.slice(0, -1)
+      );
+    }
   }, [
     inputRef,
     text,
@@ -428,6 +689,11 @@ export default function AnimatedKeyboard({
 
       /*
        * Don't intercept browser shortcuts.
+       *
+       * IMPORTANT:
+       * Ctrl/Cmd + A is intentionally left completely native.
+       * The browser selects the input text, and Backspace below
+       * reads selectionStart/selectionEnd from the real input.
        */
 
       if (
@@ -479,15 +745,20 @@ export default function AnimatedKeyboard({
       if (event.key === "Backspace") {
         event.preventDefault();
 
-        if (!event.repeat) {
-          playKeySound("backspace");
+        // Play sound on the initial press and repeated
+        // keydown events while Backspace is held.
+        playKeySound("backspace");
 
+        if (!event.repeat) {
           pressKeyAnimation(
             "Backspace"
           );
-
-          handleBackspace();
         }
+
+        // IMPORTANT:
+        // Do this on every keydown, including event.repeat,
+        // so holding Backspace continuously deletes text.
+        handleBackspace();
 
         return;
       }

@@ -1,36 +1,211 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# AIFlow — AI-Powered CRM
 
-## Getting Started
+AIFlow is a modern **AI-native CRM platform** designed to help sales teams identify high-intent leads, understand customer behavior, manage sales pipelines, and make smarter sales decisions.
 
-First, run the development server:
+> 🚧 AIFlow is actively being developed into a complete AI-powered sales platform.
+
+## 🚀 Live Demo
+
+**[View AIFlow Live Demo](https://aiflow-crm.vercel.app/)**
+
+## ✨ Features
+
+### Sales Dashboard
+
+* Modern CRM dashboard
+* Sales performance overview
+* Sales pipeline visualization
+* Conversion, response and win-rate metrics
+* Recent lead activity
+
+### Lead Intelligence
+
+* Hot lead detection
+* AI lead score visualization
+* Purchase-intent signals
+* Lead activity tracking
+* Recommended next actions
+
+### UI & Experience
+
+* Responsive dashboard
+* Dark / Light mode
+* Glassmorphism interface
+* Interactive micro-interactions
+* Smooth page and component animations
+* Framer Motion animation system
+* Modern SaaS-style UI
+
+## 🧠 AI Capabilities
+
+AIFlow is being designed around an AI-native sales workflow.
+
+Planned AI capabilities include:
+
+* **AI Lead Scoring** — Automatically evaluate lead quality and intent
+* **Buying Intent Detection** — Identify strong purchase signals
+* **AI Sales Agent** — Assist sales teams with conversations and responses
+* **AI Follow-up Automation** — Generate and schedule intelligent follow-ups
+* **Next Best Action** — Recommend the most effective action for each lead
+* **AI Research Agent** — Research companies and prospects
+* **AI Call Intelligence** — Analyze calls, summaries and action items
+* **Customer Memory** — Maintain contextual customer information
+* **Predictive Sales Intelligence** — Predict conversion opportunities and sales outcomes
+
+## 🛠 Tech Stack
+
+### Frontend
+
+* Next.js
+* React
+* TypeScript
+* Tailwind CSS
+* Framer Motion
+* Lucide React
+
+### Backend
+
+Planned / actively developing:
+
+* Next.js API / server architecture
+* Database integration
+* Authentication
+* CRM data management
+* AI API integration
+
+## 📊 Project Status
+
+| Area                        | Status            |
+| --------------------------- | ----------------- |
+| Dashboard UI                | ✅ Completed       |
+| Responsive Design           | ✅ Completed       |
+| Dark / Light Theme          | ✅ Completed       |
+| Lead Intelligence UI        | ✅ Completed       |
+| Sales Pipeline UI           | ✅ Completed       |
+| Performance Analytics       | ✅ Completed       |
+| Motion & Micro-interactions | ✅ Completed       |
+| Backend Architecture        | 🚧 In Development |
+| Database                    | 🚧 In Development |
+| Authentication              | 🚧 In Development |
+| AI Lead Intelligence        | 🚧 In Development |
+| AI Sales Agent              | 🚧 Planned        |
+| AI Automation               | 🚧 Planned        |
+
+## 🏗️ Project Vision
+
+AIFlow is being built beyond a traditional CRM dashboard.
+
+The goal is to create an **AI-native sales operating system** that helps sales teams:
+
+**Understand → Prioritize → Act → Convert**
+
+Instead of simply storing customer data, AIFlow aims to continuously analyze customer behavior, identify opportunities, and recommend the next best action.
+
+## 🎯 Roadmap
+
+### Phase 1 — CRM Foundation
+
+* Lead management
+* Companies
+* Contacts
+* Deals
+* Sales pipeline
+* Activity tracking
+
+### Phase 2 — AI Lead Intelligence
+
+* AI lead scoring
+* Intent detection
+* Behavioral analysis
+* Lead prioritization
+
+### Phase 3 — AI Sales Agent
+
+* AI-generated responses
+* Personalized outreach
+* Follow-up generation
+* Conversation assistance
+
+### Phase 4 — Sales Automation
+
+* Automated follow-ups
+* Next best action
+* Workflow automation
+* Smart notifications
+
+### Phase 5 — Predictive Intelligence
+
+* Conversion prediction
+* Deal forecasting
+* Customer insights
+* Sales performance intelligence
+
+## 💻 Getting Started
+
+Clone the repository:
+
+```bash
+git clone https://github.com/lakhbirsingh1/aiflow-crm.git
+cd aiflow-crm
+```
+
+Install dependencies:
+
+```bash
+npm install
+```
+
+Run the development server:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```text
+http://localhost:3000
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 🔐 Environment Variables
 
-## Learn More
+When backend and AI services are enabled, environment variables will be required.
 
-To learn more about Next.js, take a look at the following resources:
+Create:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```text
+.env.local
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Example:
 
-## Deploy on Vercel
+```env
+AI_API_KEY=
+DATABASE_URL=
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+**Never commit real API keys or secrets to GitHub.**
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 📁 Project Focus
+
+AIFlow focuses on:
+
+* Modern frontend architecture
+* Reusable React components
+* Type-safe development
+* Responsive UI systems
+* Motion-driven interactions
+* AI-native product design
+* Scalable CRM architecture
+
+## 👨‍💻 Developer
+
+**Lakhbir Singh**
+
+Frontend Developer • Visual Designer
+
+Built with **Next.js, TypeScript, Tailwind CSS and Framer Motion**.
+
+---
+
+⭐ If you find the project interesting, feel free to explore the code and live demo.
