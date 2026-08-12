@@ -88,7 +88,7 @@ export default function Hero() {
               size="lg"
               className="h-11 rounded-lg px-6"
             >
-              <Link href="/dashboard">
+              <Link href="/dashboard" className="flex items-center">
                 Get Started
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Link>

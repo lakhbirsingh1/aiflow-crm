@@ -71,7 +71,7 @@ export default function CTA() {
             size="lg"
             className="h-11 rounded-lg px-6"
           >
-            <Link href="/dashboard">
+            <Link href="/dashboard" className="flex items-center">
               Join AIFlow
               <ArrowRight className="ml-2 h-4 w-4" />
             </Link>
