@@ -4,8 +4,8 @@ import { useMemo, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import {
   CalendarClock,
-  Edit,
   Mail,
+  Pencil,
   Phone,
   Search,
   Sparkles,
@@ -421,7 +421,7 @@ export default function LeadsTable({
                                     }
                                     className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                                   >
-                                    <Edit className="h-3.5 w-3.5" />
+                                    <Pencil className="h-3.5 w-3.5" />
                                   </button>
 
                                   <button
@@ -562,7 +562,7 @@ export default function LeadsTable({
                                 }
                                 className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-muted px-3 text-xs font-medium"
                               >
-                                <Edit className="h-3 w-3" />
+                                <Pencil className="h-3 w-3" />
                                 Edit
                               </button>
 
@@ -854,7 +854,7 @@ export default function LeadsTable({
                     }}
                     className="flex h-10 flex-1 items-center justify-center gap-2 rounded-xl bg-foreground text-sm font-medium text-background"
                   >
-                    <Edit className="h-4 w-4" />
+                    <Pencil className="h-4 w-4" />
                     Edit lead
                   </button>
 

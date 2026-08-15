@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 import {
   Activity,
   BarChart3,
@@ -26,7 +27,15 @@ type DashboardSidebarProps = {
   onCollapsedChange: (collapsed: boolean) => void;
 };
 
-const navigation = [
+type NavigationItem = {
+  label: string;
+  href: string;
+  icon: typeof LayoutDashboard;
+  featured?: boolean;
+  adminOnly?: boolean;
+};
+
+const navigation: NavigationItem[] = [
   {
     label: "Overview",
     href: "/dashboard",
@@ -58,6 +67,14 @@ const navigation = [
     href: "/dashboard/analytics",
     icon: BarChart3,
   },
+
+  // ADMIN ONLY
+  {
+    label: "Users",
+    href: "/dashboard/users",
+    icon: Users,
+    adminOnly: true,
+  },
 ];
 
 export default function DashboardSidebar({
@@ -68,6 +85,47 @@ export default function DashboardSidebar({
 }: DashboardSidebarProps) {
   const pathname = usePathname();
 
+  const [userRole, setUserRole] = useState<string | null>(
+    null,
+  );
+
+  useEffect(() => {
+    let mounted = true;
+
+    const loadProfile = async () => {
+      try {
+        const response = await fetch(
+          "/api/auth/my-profile",
+          {
+            method: "GET",
+            cache: "no-store",
+          },
+        );
+
+        if (!response.ok) {
+          return;
+        }
+
+        const data = await response.json();
+
+        if (mounted) {
+          setUserRole(data.user?.role ?? null);
+        }
+      } catch (error) {
+        console.error(
+          "Failed to load user role:",
+          error,
+        );
+      }
+    };
+
+    loadProfile();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
   const sidebarContent = (
     <>
       {/* =====================================================
@@ -76,7 +134,9 @@ export default function DashboardSidebar({
 
       <div
         className={`relative flex h-20 shrink-0 items-center border-b border-border px-4 ${
-          collapsed ? "justify-center" : "justify-between"
+          collapsed
+            ? "justify-center"
+            : "justify-between"
         }`}
       >
         {/* LOGO */}
@@ -192,194 +252,199 @@ export default function DashboardSidebar({
         {/* NAV ITEMS */}
 
         <div className="space-y-1">
-          {navigation.map((item) => {
-            const Icon = item.icon;
+          {navigation
+            .filter(
+              (item) =>
+                !item.adminOnly ||
+                userRole === "ADMIN",
+            )
+            .map((item) => {
+              const Icon = item.icon;
 
-            const isActive =
-              pathname === item.href ||
-              (item.href !== "/dashboard" &&
-                pathname.startsWith(
-                  `${item.href}/`,
-                ));
+              const isActive =
+                pathname === item.href ||
+                (item.href !== "/dashboard" &&
+                  pathname.startsWith(
+                    `${item.href}/`,
+                  ));
 
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={onMobileClose}
-                className={`group relative flex h-11 items-center rounded-xl text-sm font-medium transition-colors ${
-                  collapsed
-                    ? "justify-center px-0"
-                    : "gap-3 px-3"
-                } ${
-                  isActive
-                    ? "bg-primary/[0.10] text-primary shadow-[inset_0_0_0_1px_hsl(var(--primary)/0.10)] hover:bg-primary/[0.14]"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                }`}
-              >
-                {/* ACTIVE INDICATOR */}
-
-                <AnimatePresence>
-                  {isActive && (
-                    <motion.span
-                      layoutId="sidebar-active-indicator"
-                      initial={{
-                        opacity: 0,
-                        scaleY: 0.5,
-                      }}
-                      animate={{
-                        opacity: 1,
-                        scaleY: 1,
-                      }}
-                      exit={{
-                        opacity: 0,
-                        scaleY: 0.5,
-                      }}
-                      transition={{
-                        type: "spring",
-                        stiffness: 500,
-                        damping: 35,
-                      }}
-                      className="absolute left-0 top-1/2 h-6 w-[3px] -translate-y-1/2 rounded-r-full bg-primary"
-                    />
-                  )}
-                </AnimatePresence>
-
-                {/* ICON */}
-
-                <span
-                  className={`relative flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={onMobileClose}
+                  className={`group relative flex h-11 items-center rounded-xl text-sm font-medium transition-colors ${
+                    collapsed
+                      ? "justify-center px-0"
+                      : "gap-3 px-3"
+                  } ${
                     isActive
-                      ? "bg-primary/15"
-                      : ""
+                      ? "bg-primary/[0.10] text-primary shadow-[inset_0_0_0_1px_hsl(var(--primary)/0.10)] hover:bg-primary/[0.14]"
+                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
                   }`}
                 >
-                  {/* AI RADAR GLOW */}
+                  {/* ACTIVE INDICATOR */}
 
-                  {item.featured && (
-                    <motion.span
-                      className="absolute inset-0 rounded-lg bg-primary/10"
-                      animate={{
-                        opacity: [
-                          0.2,
-                          0.55,
-                          0.2,
-                        ],
-                        scale: [
-                          0.95,
-                          1.08,
-                          0.95,
-                        ],
-                      }}
-                      transition={{
-                        duration: 2.2,
-                        repeat: Infinity,
-                        ease: "easeInOut",
-                      }}
-                    />
-                  )}
-
-                  <Icon
-                    className={`relative h-[18px] w-[18px] ${
-                      isActive
-                        ? "text-primary"
-                        : item.featured
-                          ? "text-primary"
-                          : ""
-                    }`}
-                  />
-
-                  {/* AI RADAR LIVE PULSE */}
-
-                  {item.featured && (
-                    <span className="absolute -right-0.5 -top-0.5 flex h-2 w-2">
+                  <AnimatePresence>
+                    {isActive && (
                       <motion.span
-                        className="absolute right-0 top-0 h-2 w-2 rounded-full bg-primary"
+                        layoutId="sidebar-active-indicator"
+                        initial={{
+                          opacity: 0,
+                          scaleY: 0.5,
+                        }}
                         animate={{
-                          scale: [
-                            1,
-                            2.2,
-                            1,
-                          ],
+                          opacity: 1,
+                          scaleY: 1,
+                        }}
+                        exit={{
+                          opacity: 0,
+                          scaleY: 0.5,
+                        }}
+                        transition={{
+                          type: "spring",
+                          stiffness: 500,
+                          damping: 35,
+                        }}
+                        className="absolute left-0 top-1/2 h-6 w-[3px] -translate-y-1/2 rounded-r-full bg-primary"
+                      />
+                    )}
+                  </AnimatePresence>
+
+                  {/* ICON */}
+
+                  <span
+                    className={`relative flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${
+                      isActive
+                        ? "bg-primary/15"
+                        : ""
+                    }`}
+                  >
+                    {/* AI RADAR GLOW */}
+
+                    {item.featured && (
+                      <motion.span
+                        className="absolute inset-0 rounded-lg bg-primary/10"
+                        animate={{
                           opacity: [
-                            0.45,
-                            0,
-                            0.45,
+                            0.2,
+                            0.55,
+                            0.2,
+                          ],
+                          scale: [
+                            0.95,
+                            1.08,
+                            0.95,
                           ],
                         }}
                         transition={{
-                          duration: 1.8,
+                          duration: 2.2,
                           repeat: Infinity,
-                          ease: "easeOut",
+                          ease: "easeInOut",
                         }}
                       />
+                    )}
 
-                      <span className="relative h-1.5 w-1.5 rounded-full bg-primary" />
+                    <Icon
+                      className={`relative h-[18px] w-[18px] ${
+                        isActive
+                          ? "text-primary"
+                          : item.featured
+                            ? "text-primary"
+                            : ""
+                      }`}
+                    />
+
+                    {/* AI RADAR LIVE PULSE */}
+
+                    {item.featured && (
+                      <span className="absolute -right-0.5 -top-0.5 flex h-2 w-2">
+                        <motion.span
+                          className="absolute right-0 top-0 h-2 w-2 rounded-full bg-primary"
+                          animate={{
+                            scale: [
+                              1,
+                              2.2,
+                              1,
+                            ],
+                            opacity: [
+                              0.45,
+                              0,
+                              0.45,
+                            ],
+                          }}
+                          transition={{
+                            duration: 1.8,
+                            repeat: Infinity,
+                            ease: "easeOut",
+                          }}
+                        />
+
+                        <span className="relative h-1.5 w-1.5 rounded-full bg-primary" />
+                      </span>
+                    )}
+                  </span>
+
+                  {/* LABEL */}
+
+                  <AnimatePresence initial={false}>
+                    {!collapsed && (
+                      <motion.span
+                        initial={{
+                          opacity: 0,
+                          width: 0,
+                        }}
+                        animate={{
+                          opacity: 1,
+                          width: "auto",
+                        }}
+                        exit={{
+                          opacity: 0,
+                          width: 0,
+                        }}
+                        transition={{
+                          duration: 0.15,
+                        }}
+                        className="truncate overflow-hidden whitespace-nowrap"
+                      >
+                        {item.label}
+                      </motion.span>
+                    )}
+                  </AnimatePresence>
+
+                  {/* AI RADAR LIVE BADGE */}
+
+                  {item.featured &&
+                    !collapsed && (
+                      <motion.span
+                        initial={{
+                          opacity: 0,
+                          scale: 0.9,
+                        }}
+                        animate={{
+                          opacity: 1,
+                          scale: 1,
+                        }}
+                        transition={{
+                          duration: 0.2,
+                        }}
+                        className="ml-auto inline-flex items-center gap-1.5 rounded-full border border-primary/15 bg-primary/10 px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.08em] text-primary"
+                      >
+                        <Sparkles className="h-2.5 w-2.5" />
+                        Live
+                      </motion.span>
+                    )}
+
+                  {/* COLLAPSED TOOLTIP */}
+
+                  {collapsed && (
+                    <span className="pointer-events-none absolute left-full z-[100] ml-3 whitespace-nowrap rounded-lg border border-border bg-popover px-3 py-1.5 text-[11px] font-medium text-popover-foreground opacity-0 shadow-lg transition-all group-hover:translate-x-1 group-hover:opacity-100">
+                      {item.label}
                     </span>
                   )}
-                </span>
-
-                {/* LABEL */}
-
-                <AnimatePresence initial={false}>
-                  {!collapsed && (
-                    <motion.span
-                      initial={{
-                        opacity: 0,
-                        width: 0,
-                      }}
-                      animate={{
-                        opacity: 1,
-                        width: "auto",
-                      }}
-                      exit={{
-                        opacity: 0,
-                        width: 0,
-                      }}
-                      transition={{
-                        duration: 0.15,
-                      }}
-                      className="truncate overflow-hidden whitespace-nowrap"
-                    >
-                      {item.label}
-                    </motion.span>
-                  )}
-                </AnimatePresence>
-
-                {/* AI RADAR LIVE BADGE */}
-
-                {item.featured &&
-                  !collapsed && (
-                    <motion.span
-                      initial={{
-                        opacity: 0,
-                        scale: 0.9,
-                      }}
-                      animate={{
-                        opacity: 1,
-                        scale: 1,
-                      }}
-                      transition={{
-                        duration: 0.2,
-                      }}
-                      className="ml-auto inline-flex items-center gap-1.5 rounded-full border border-primary/15 bg-primary/10 px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.08em] text-primary"
-                    >
-                      <Sparkles className="h-2.5 w-2.5" />
-
-                      Live
-                    </motion.span>
-                  )}
-
-                {/* COLLAPSED TOOLTIP */}
-
-                {collapsed && (
-                  <span className="pointer-events-none absolute left-full z-[100] ml-3 whitespace-nowrap rounded-lg border border-border bg-popover px-3 py-1.5 text-[11px] font-medium text-popover-foreground opacity-0 shadow-lg transition-all group-hover:translate-x-1 group-hover:opacity-100">
-                    {item.label}
-                  </span>
-                )}
-              </Link>
-            );
-          })}
+                </Link>
+              );
+            })}
         </div>
 
         {/* =====================================================
@@ -557,7 +622,8 @@ export default function DashboardSidebar({
       <div className="shrink-0 border-t border-border p-3">
         {(() => {
           const isSettingsActive =
-            pathname === "/dashboard/settings" ||
+            pathname ===
+              "/dashboard/settings" ||
             pathname.startsWith(
               "/dashboard/settings/",
             );

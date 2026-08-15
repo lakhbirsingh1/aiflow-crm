@@ -25,6 +25,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 import type { Lead } from "@/types/lead";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 type AddLeadDialogProps = {
   children: ReactNode;
@@ -186,7 +187,7 @@ export default function AddLeadDialog({
         open={open}
         onOpenChange={handleOpenChange}
       >
-        <DialogContent className="w-[calc(100%-2rem)] max-w-lg overflow-hidden rounded-2xl border-border/60 p-0 shadow-2xl">
+        <DialogContent className="w-[calc(100%-2rem)] sm:max-w-xl overflow-hidden rounded-2xl border-border/60 p-0 shadow-2xl">
           <DialogHeader className="border-b border-border/50 px-5 py-5">
             <div className="flex items-start justify-between gap-4">
               <div>
@@ -317,7 +318,7 @@ export default function AddLeadDialog({
                   Contact
                 </p>
 
-                <div className="space-y-4">
+                <div className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-2">
                     <Label
                       htmlFor="email"
@@ -452,44 +453,31 @@ export default function AddLeadDialog({
                       Status
                     </Label>
 
-                    <select
-                      id="status"
+                    <Select
                       value={form.status}
-                      onChange={(event) =>
-                        updateField(
-                          "status",
-                          event.target.value,
-                        )
-                      }
+                      onValueChange={(value) => {
+                        if (value) {
+                          updateField("status", value);
+                        }
+                      }}
                       disabled={loading}
-                      className="h-10 w-full rounded-xl border border-input bg-background px-3 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring"
                     >
-                      <option value="NEW">
-                        New
-                      </option>
+                      <SelectTrigger
+                        id="status"
+                        className="h-10 w-full rounded-xl"
+                      >
+                        <SelectValue placeholder="Select status" />
+                      </SelectTrigger>
 
-                      <option value="CONTACTED">
-                        Contacted
-                      </option>
-
-                      <option value="QUALIFIED">
-                        Qualified
-                      </option>
-
-               
-
-                      <option value="PROPOSAL">
-                        Proposal
-                      </option>
-
-                      <option value="WON">
-                        Won
-                      </option>
-
-                      <option value="LOST">
-                        Lost
-                      </option>
-                    </select>
+                      <SelectContent>
+                        <SelectItem value="NEW">New</SelectItem>
+                        <SelectItem value="CONTACTED">Contacted</SelectItem>
+                        <SelectItem value="QUALIFIED">Qualified</SelectItem>
+                        <SelectItem value="PROPOSAL">Proposal</SelectItem>
+                        <SelectItem value="WON">Won</SelectItem>
+                        <SelectItem value="LOST">Lost</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   <div className="space-y-2">
@@ -500,42 +488,48 @@ export default function AddLeadDialog({
                       Source
                     </Label>
 
-                    <select
-                      id="source"
+                    <Select
                       value={form.source}
-                      onChange={(event) =>
-                        updateField(
-                          "source",
-                          event.target.value,
-                        )
-                      }
+                      onValueChange={(value) => {
+                        if (value) {
+                          updateField("source", value);
+                        }
+                      }}
                       disabled={loading}
-                      className="h-10 w-full rounded-xl border border-input bg-background px-3 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring"
                     >
-                      <option value="WEBSITE">
-                        Website
-                      </option>
+                      <SelectTrigger
+                        id="source"
+                        className="h-10 w-full rounded-xl"
+                      >
+                        <SelectValue placeholder="Select source" />
+                      </SelectTrigger>
 
-                      <option value="LINKEDIN">
-                        LinkedIn
-                      </option>
+                      <SelectContent>
+                        <SelectItem value="WEBSITE">
+                          Website
+                        </SelectItem>
 
-                      <option value="EMAIL">
-                        Email
-                      </option>
+                        <SelectItem value="LINKEDIN">
+                          LinkedIn
+                        </SelectItem>
 
-                      <option value="COLD_OUTREACH">
-                        Cold outreach
-                      </option>
+                        <SelectItem value="EMAIL">
+                          Email
+                        </SelectItem>
 
-                      <option value="REFERRAL">
-                        Referral
-                      </option>
+                        <SelectItem value="COLD_OUTREACH">
+                          Cold outreach
+                        </SelectItem>
 
-                      <option value="OTHER">
-                        Other
-                      </option>
-                    </select>
+                        <SelectItem value="REFERRAL">
+                          Referral
+                        </SelectItem>
+
+                        <SelectItem value="OTHER">
+                          Other
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
               </div>

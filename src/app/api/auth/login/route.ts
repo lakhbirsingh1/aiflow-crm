@@ -7,11 +7,17 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
 
-    const email = String(body.email ?? "")
-      .trim()
-      .toLowerCase();
+    const remember = Boolean(body.remember);
 
-    const password = String(body.password ?? "");
+    const email =
+      typeof body.email === "string"
+        ? body.email.trim().toLowerCase()
+        : "";
+
+    const password =
+      typeof body.password === "string"
+        ? body.password
+        : "";
 
     if (!email || !password) {
       return NextResponse.json(
@@ -27,8 +33,19 @@ export async function POST(request: NextRequest) {
       where: {
         email,
       },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        password: true,
+        role: true,
+        googleId: true,
+      },
     });
 
+    /*
+     * Do not reveal whether the email exists.
+     */
     if (!user) {
       return NextResponse.json(
         {
@@ -39,12 +56,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Password must exist before bcrypt.compare()
+    /*
+     * Google-only accounts don't have a password.
+     * They must use "Continue with Google".
+     */
     if (!user.password) {
       return NextResponse.json(
         {
           success: false,
-          message: "Password is not set for this account.",
+          message: user.googleId
+            ? "This account uses Google sign-in. Please continue with Google."
+            : "Invalid email or password.",
         },
         { status: 401 },
       );
@@ -65,22 +87,46 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const response = NextResponse.json({
-      success: true,
-      message: "Login successful.",
-      user: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
+    const response = NextResponse.json(
+      {
+        success: true,
+        message: "Login successful.",
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+        },
       },
-    });
+      {
+        status: 200,
+        headers: {
+          "Cache-Control":
+            "no-store, no-cache, must-revalidate",
+        },
+      },
+    );
 
+    /*
+     * Session cookie
+     *
+     * Remember checked:
+     * → Cookie persists for 30 days.
+     *
+     * Remember unchecked:
+     * → Session cookie expires when the browser session ends.
+     */
     response.cookies.set("aiflow_session", user.id, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure:
+        process.env.NODE_ENV === "production",
       sameSite: "lax",
-      maxAge: 60 * 60 * 24 * 30,
       path: "/",
+      ...(remember
+        ? {
+            maxAge: 60 * 60 * 24 * 30,
+          }
+        : {}),
     });
 
     return response;
@@ -93,7 +139,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         success: false,
-        message: "Something went wrong. Please try again.",
+        message:
+          "Something went wrong. Please try again.",
       },
       { status: 500 },
     );

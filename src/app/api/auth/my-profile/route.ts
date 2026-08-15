@@ -1,13 +1,12 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
+import { getCurrentUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/prisma";
 
 export async function GET() {
   try {
-    const cookieStore = await cookies();
-    const session = cookieStore.get("aiflow_session");
+    const user = await getCurrentUser();
 
-    if (!session?.value) {
+    if (!user) {
       return NextResponse.json(
         {
           authenticated: false,
@@ -18,33 +17,16 @@ export async function GET() {
       );
     }
 
-    const user = await prisma.user.findUnique({
-      where: {
-        id: session.value,
-      },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        createdAt: true,
-      },
-    });
-
-    if (!user) {
-      return NextResponse.json(
-        {
-          authenticated: false,
-          user: null,
-          error: "User not found",
-        },
-        { status: 404 }
-      );
-    }
-
     return NextResponse.json(
       {
         authenticated: true,
-        user,
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          createdAt: user.createdAt,
+        },
       },
       {
         status: 200,
@@ -73,10 +55,9 @@ export async function GET() {
 
 export async function PUT(request: Request) {
   try {
-    const cookieStore = await cookies();
-    const session = cookieStore.get("aiflow_session");
+    const user = await getCurrentUser();
 
-    if (!session?.value) {
+    if (!user) {
       return NextResponse.json(
         {
           success: false,
@@ -113,41 +94,21 @@ export async function PUT(request: Request) {
       );
     }
 
-    const existingUser =
-      await prisma.user.findUnique({
-        where: {
-          id: session.value,
-        },
-        select: {
-          id: true,
-        },
-      });
-
-    if (!existingUser) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "User not found",
-        },
-        { status: 404 }
-      );
-    }
-
-    const updatedUser =
-      await prisma.user.update({
-        where: {
-          id: session.value,
-        },
-        data: {
-          name,
-        },
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          createdAt: true,
-        },
-      });
+    const updatedUser = await prisma.user.update({
+      where: {
+        id: user.id,
+      },
+      data: {
+        name,
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        createdAt: true,
+      },
+    });
 
     return NextResponse.json(
       {

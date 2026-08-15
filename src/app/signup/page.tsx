@@ -1,7 +1,9 @@
+
 "use client";
 
+import type { FormEvent } from "react";
 import Link from "next/link";
-import { FormEvent, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { useRouter } from "next/navigation";
 import {
@@ -19,10 +21,12 @@ import { useTheme } from "next-themes";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 
 export default function SignupPage() {
   const { theme, setTheme } = useTheme();
   const router = useRouter();
+
   const [mounted, setMounted] = useState(false);
 
   const [showPassword, setShowPassword] = useState(false);
@@ -32,7 +36,9 @@ export default function SignupPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] =
+    useState("");
+
   const [terms, setTerms] = useState(false);
 
   const [loading, setLoading] = useState(false);
@@ -43,12 +49,47 @@ export default function SignupPage() {
     setMounted(true);
   }, []);
 
+  /* ---------------- Password validation ---------------- */
+
+  const hasMinLength = password.length >= 8;
+  const hasUppercase = /[A-Z]/.test(password);
+  const hasNumber = /\d/.test(password);
+  const hasSpecial = /[^A-Za-z0-9]/.test(password);
+
+  const getPasswordMessage = () => {
+    if (!password) {
+      return "";
+    }
+
+    if (!hasMinLength) {
+      return "Use 8+ characters.";
+    }
+
+    if (!hasUppercase) {
+      return "Add 1 uppercase letter.";
+    }
+
+    if (!hasNumber) {
+      return "Add 1 number.";
+    }
+
+    if (!hasSpecial) {
+      return "Use a special character like #, @, or !.";
+    }
+
+    return "";
+  };
+
+  const passwordMessage = getPasswordMessage();
+
+  /* ---------------- Signup ---------------- */
+
   const handleSubmit = async (
     event: FormEvent<HTMLFormElement>,
   ) => {
     event.preventDefault();
 
-    if (loading) {
+    if (loading || success) {
       return;
     }
 
@@ -68,12 +109,24 @@ export default function SignupPage() {
     }
 
     if (password.length < 8) {
-      setError("Password must be at least 8 characters.");
+      setError("Use 8+ characters.");
+      return;
+    }
+
+    if (!/[A-Z]/.test(password)) {
+      setError("Add 1 uppercase letter.");
       return;
     }
 
     if (!/\d/.test(password)) {
-      setError("Password must contain at least one number.");
+      setError("Add 1 number.");
+      return;
+    }
+
+    if (!/[^A-Za-z0-9]/.test(password)) {
+      setError(
+        "Use a special character like #, @, or !.",
+      );
       return;
     }
 
@@ -118,7 +171,6 @@ export default function SignupPage() {
         router.push("/dashboard");
         router.refresh();
       }, 700);
-
     } catch (error) {
       console.error("Signup error:", error);
 
@@ -130,6 +182,64 @@ export default function SignupPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  /* ---------------- Google Signup ---------------- */
+
+  const handleGoogleSignup = () => {
+    if (loading || success) {
+      return;
+    }
+
+    setError("");
+
+    const clientId =
+      process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+
+    if (!clientId) {
+      setError("Google login is not configured.");
+      return;
+    }
+
+    const redirectUri =
+      `${window.location.origin}/api/auth/google/callback`;
+
+    const googleAuthUrl = new URL(
+      "https://accounts.google.com/o/oauth2/v2/auth",
+    );
+
+    googleAuthUrl.searchParams.set(
+      "client_id",
+      clientId,
+    );
+
+    googleAuthUrl.searchParams.set(
+      "redirect_uri",
+      redirectUri,
+    );
+
+    googleAuthUrl.searchParams.set(
+      "response_type",
+      "code",
+    );
+
+    googleAuthUrl.searchParams.set(
+      "scope",
+      "openid email profile",
+    );
+
+    googleAuthUrl.searchParams.set(
+      "access_type",
+      "offline",
+    );
+
+    googleAuthUrl.searchParams.set(
+      "prompt",
+      "select_account",
+    );
+
+    window.location.href =
+      googleAuthUrl.toString();
   };
 
   return (
@@ -151,9 +261,18 @@ export default function SignupPage() {
             href="/"
             className="group flex items-center gap-2"
           >
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-lg shadow-primary/20">
+            <motion.div
+              whileHover={{
+                rotate: 6,
+                scale: 1.05,
+              }}
+              transition={{
+                duration: 0.2,
+              }}
+              className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-lg shadow-primary/20"
+            >
               <Sparkles className="h-4 w-4" />
-            </div>
+            </motion.div>
 
             <span className="text-lg font-semibold tracking-tight">
               AIFlow
@@ -177,7 +296,9 @@ export default function SignupPage() {
                 size="icon"
                 onClick={() =>
                   setTheme(
-                    theme === "dark" ? "light" : "dark",
+                    theme === "dark"
+                      ? "light"
+                      : "dark",
                   )
                 }
                 className="h-9 w-9 rounded-lg bg-background/70 text-muted-foreground backdrop-blur"
@@ -199,8 +320,14 @@ export default function SignupPage() {
         <div className="w-full max-w-[450px]">
           {/* Intro */}
           <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
+            initial={{
+              opacity: 0,
+              y: 12,
+            }}
+            animate={{
+              opacity: 1,
+              y: 0,
+            }}
             transition={{
               duration: 0.35,
               ease: "easeOut",
@@ -388,7 +515,7 @@ export default function SignupPage() {
                       }
                     }}
                     disabled={loading || success}
-                    className="h-12 rounded-xl bg-background/70 pr-11"
+                    className="h-12 w-full rounded-xl bg-background/70 pr-11"
                   />
 
                   <Button
@@ -401,7 +528,7 @@ export default function SignupPage() {
                       )
                     }
                     disabled={loading || success}
-                    className="absolute right-1 top-1/2 h-10 w-10 -translate-y-1/2 text-muted-foreground hover:bg-transparent hover:text-foreground"
+                    className="absolute right-1 top-0 bottom-0 z-10 my-auto h-10 w-10 text-muted-foreground hover:bg-transparent hover:text-foreground"
                     aria-label={
                       showPassword
                         ? "Hide password"
@@ -416,17 +543,31 @@ export default function SignupPage() {
                   </Button>
                 </div>
 
-                <div className="grid grid-cols-2 gap-x-4 gap-y-1 pt-1">
-                  <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-                    <Check className="h-3 w-3 text-primary" />
-                    8+ characters
-                  </div>
-
-                  <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-                    <Check className="h-3 w-3 text-primary" />
-                    One number
-                  </div>
-                </div>
+                <AnimatePresence mode="wait">
+                  {passwordMessage && (
+                    <motion.p
+                      key={passwordMessage}
+                      initial={{
+                        opacity: 0,
+                        y: -3,
+                      }}
+                      animate={{
+                        opacity: 1,
+                        y: 0,
+                      }}
+                      exit={{
+                        opacity: 0,
+                        y: -3,
+                      }}
+                      transition={{
+                        duration: 0.15,
+                      }}
+                      className="text-[11px] text-destructive"
+                    >
+                      {passwordMessage}
+                    </motion.p>
+                  )}
+                </AnimatePresence>
               </div>
 
               {/* Confirm Password */}
@@ -457,7 +598,11 @@ export default function SignupPage() {
                       }
                     }}
                     disabled={loading || success}
-                    className="h-12 rounded-xl bg-background/70 pr-11"
+                    className={`h-12 w-full rounded-xl bg-background/70 pr-11 ${confirmPassword &&
+                      confirmPassword !== password
+                      ? "border-destructive focus-visible:ring-destructive/20"
+                      : ""
+                      }`}
                   />
 
                   <Button
@@ -470,7 +615,7 @@ export default function SignupPage() {
                       )
                     }
                     disabled={loading || success}
-                    className="absolute right-1 top-1/2 h-10 w-10 -translate-y-1/2 text-muted-foreground hover:bg-transparent hover:text-foreground"
+                    className="absolute right-1 top-0 bottom-0 z-10 my-auto h-10 w-10 text-muted-foreground hover:bg-transparent hover:text-foreground"
                     aria-label={
                       showConfirmPassword
                         ? "Hide password"
@@ -484,47 +629,71 @@ export default function SignupPage() {
                     )}
                   </Button>
                 </div>
+
+                <AnimatePresence mode="wait">
+                  {confirmPassword &&
+                    confirmPassword !== password && (
+                      <motion.p
+                        key="password-mismatch"
+                        initial={{
+                          opacity: 0,
+                          y: -3,
+                        }}
+                        animate={{
+                          opacity: 1,
+                          y: 0,
+                        }}
+                        exit={{
+                          opacity: 0,
+                          y: -3,
+                        }}
+                        transition={{
+                          duration: 0.15,
+                        }}
+                        className="text-[11px] text-destructive"
+                      >
+                        Passwords do not match.
+                      </motion.p>
+                    )}
+                </AnimatePresence>
               </div>
 
-              {/* Terms */}
+              {/* Terms - shadcn Checkbox */}
               <div className="flex items-start gap-3 pt-1">
-                <input
+                <Checkbox
                   id="terms"
-                  type="checkbox"
                   checked={terms}
-                  onChange={(event) => {
-                    setTerms(
-                      event.target.checked,
-                    );
+                  onCheckedChange={(checked) => {
+                    setTerms(checked === true);
 
                     if (error) {
                       setError("");
                     }
                   }}
                   disabled={loading || success}
-                  className="mt-0.5 h-4 w-4 rounded border-input accent-primary"
+                  className="mt-0.5"
                 />
 
-                <label
+                <Label
                   htmlFor="terms"
-                  className="text-xs leading-5 text-muted-foreground"
+                  className="cursor-pointer text-xs font-normal leading-5 text-muted-foreground"
                 >
                   I agree to AIFlow's{" "}
                   <Link
-                    href="#"
+                    href="/terms"
                     className="font-medium text-foreground hover:text-primary"
                   >
                     Terms of Service
-                  </Link>{" "}
+                  </Link>
                   and{" "}
                   <Link
-                    href="#"
+                    href="/privacy"
                     className="font-medium text-foreground hover:text-primary"
                   >
                     Privacy Policy
                   </Link>
                   .
-                </label>
+                </Label>
               </div>
 
               {/* Create Account */}
@@ -579,7 +748,8 @@ export default function SignupPage() {
             <Button
               type="button"
               variant="outline"
-              disabled
+              disabled={loading || success}
+              onClick={handleGoogleSignup}
               className="h-12 w-full rounded-xl bg-background/60 text-sm font-medium"
             >
               <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white text-xs font-bold text-black">
@@ -611,3 +781,4 @@ export default function SignupPage() {
     </main>
   );
 }
+
