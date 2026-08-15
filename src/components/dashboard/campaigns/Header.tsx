@@ -159,9 +159,11 @@ export default function Header({
           </DropdownMenu>
         </div>
 
-        {/* Stats */}
+        
+      </motion.div>
+      {/* Stats */}
 
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:w-auto">
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:w-auto mb-4">
           <Stat
             icon={Megaphone}
             label="Active"
@@ -186,7 +188,6 @@ export default function Header({
             value="218"
           />
         </div>
-      </motion.div>
     </section>
   );
 }

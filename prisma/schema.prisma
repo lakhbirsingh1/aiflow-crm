@@ -1,0 +1,117 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id         String     @id @default(cuid())
+  name       String
+  email      String     @unique
+  password   String?
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+  activities Activity[]
+  campaigns  Campaign[]
+  leads      Lead[]
+}
+
+model Lead {
+  id         String      @id @default(cuid())
+  firstName  String
+  lastName   String?
+  email      String?
+  phone      String?
+  company    String?
+  jobTitle   String?
+  status     LeadStatus  @default(NEW)
+  source     LeadSource?
+  score      Int?
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+  ownerId    String
+  activities Activity[]
+  owner      User        @relation(fields: [ownerId], references: [id])
+
+  @@index([ownerId])
+  @@index([status])
+  @@index([email])
+}
+
+model Campaign {
+  id          String         @id @default(cuid())
+  name        String
+  type        CampaignType
+  status      CampaignStatus @default(DRAFT)
+  description String?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  ownerId     String
+  activities  Activity[]
+  owner       User           @relation(fields: [ownerId], references: [id])
+
+  @@index([ownerId])
+  @@index([status])
+}
+
+model Activity {
+  id          String       @id @default(cuid())
+  type        ActivityType
+  title       String
+  description String?
+  createdAt   DateTime     @default(now())
+  userId      String
+  leadId      String?
+  campaignId  String?
+  campaign    Campaign?    @relation(fields: [campaignId], references: [id])
+  lead        Lead?        @relation(fields: [leadId], references: [id])
+  user        User         @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([leadId])
+  @@index([campaignId])
+  @@index([createdAt])
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  QUALIFIED
+  PROPOSAL
+  WON
+  LOST
+}
+
+enum LeadSource {
+  WEBSITE
+  LINKEDIN
+  EMAIL
+  COLD_OUTREACH
+  REFERRAL
+  OTHER
+}
+
+enum CampaignType {
+  EMAIL
+  LINKEDIN
+  MULTI_CHANNEL
+}
+
+enum CampaignStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+  COMPLETED
+}
+
+enum ActivityType {
+  EMAIL
+  CALL
+  MEETING
+  NOTE
+  STATUS_CHANGE
+  AI_ACTION
+}

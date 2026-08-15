@@ -1,18 +1,96 @@
 "use client";
 
+import { FormEvent, useEffect, useState } from "react";
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { Eye, EyeOff, ArrowLeft, Sparkles, Sun, Moon } from "lucide-react";
+import { useRouter } from "next/navigation";
+import {
+  Eye,
+  EyeOff,
+  ArrowLeft,
+  Sparkles,
+  Sun,
+  Moon,
+  Loader2,
+} from "lucide-react";
 import { useTheme } from "next-themes";
 
 export default function LoginPage() {
+  const router = useRouter();
   const { theme, setTheme } = useTheme();
+
   const [mounted, setMounted] = useState(false);
+
   const [showPassword, setShowPassword] = useState(false);
+
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  const handleSubmit = async (
+    event: FormEvent<HTMLFormElement>,
+  ) => {
+    event.preventDefault();
+
+    if (loading) {
+      return;
+    }
+
+    setError("");
+
+    const cleanEmail = email.trim().toLowerCase();
+
+    if (!cleanEmail) {
+      setError("Please enter your email address.");
+      return;
+    }
+
+    if (!password) {
+      setError("Please enter your password.");
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: cleanEmail,
+          password,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(
+          data.message || "Invalid email or password.",
+        );
+      }
+
+      router.push("/dashboard");
+      router.refresh();
+    } catch (error) {
+      console.error("Login error:", error);
+
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Unable to sign in. Please try again.",
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-background text-foreground">
@@ -56,7 +134,9 @@ export default function LoginPage() {
               <button
                 type="button"
                 onClick={() =>
-                  setTheme(theme === "dark" ? "light" : "dark")
+                  setTheme(
+                    theme === "dark" ? "light" : "dark",
+                  )
                 }
                 className="flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-background/70 text-muted-foreground backdrop-blur transition-all hover:bg-muted hover:text-foreground"
                 aria-label="Toggle theme"
@@ -93,7 +173,20 @@ export default function LoginPage() {
 
           {/* Card */}
           <div className="rounded-3xl border border-border/70 bg-card/80 p-6 shadow-2xl shadow-black/5 backdrop-blur-xl sm:p-8">
-            <form className="space-y-5">
+            <form
+              onSubmit={handleSubmit}
+              className="space-y-5"
+            >
+              {/* Error */}
+              {error && (
+                <div
+                  role="alert"
+                  className="rounded-xl border border-destructive/20 bg-destructive/10 px-3 py-2.5 text-xs leading-5 text-destructive"
+                >
+                  {error}
+                </div>
+              )}
+
               {/* Email */}
               <div className="space-y-2">
                 <label
@@ -107,10 +200,19 @@ export default function LoginPage() {
                   id="email"
                   name="email"
                   type="email"
+                  value={email}
+                  onChange={(event) => {
+                    setEmail(event.target.value);
+
+                    if (error) {
+                      setError("");
+                    }
+                  }}
                   placeholder="you@company.com"
                   autoComplete="email"
                   required
-                  className="h-12 w-full rounded-xl border border-input bg-background/70 px-4 text-sm outline-none transition-all placeholder:text-muted-foreground/60 focus:border-primary focus:ring-4 focus:ring-primary/10"
+                  disabled={loading}
+                  className="h-12 w-full rounded-xl border border-input bg-background/70 px-4 text-sm outline-none transition-all placeholder:text-muted-foreground/60 focus:border-primary focus:ring-4 focus:ring-primary/10 disabled:cursor-not-allowed disabled:opacity-60"
                 />
               </div>
 
@@ -136,17 +238,35 @@ export default function LoginPage() {
                   <input
                     id="password"
                     name="password"
-                    type={showPassword ? "text" : "password"}
+                    type={
+                      showPassword
+                        ? "text"
+                        : "password"
+                    }
+                    value={password}
+                    onChange={(event) => {
+                      setPassword(event.target.value);
+
+                      if (error) {
+                        setError("");
+                      }
+                    }}
                     placeholder="Enter your password"
                     autoComplete="current-password"
                     required
-                    className="h-12 w-full rounded-xl border border-input bg-background/70 px-4 pr-11 text-sm outline-none transition-all placeholder:text-muted-foreground/60 focus:border-primary focus:ring-4 focus:ring-primary/10"
+                    disabled={loading}
+                    className="h-12 w-full rounded-xl border border-input bg-background/70 px-4 pr-11 text-sm outline-none transition-all placeholder:text-muted-foreground/60 focus:border-primary focus:ring-4 focus:ring-primary/10 disabled:cursor-not-allowed disabled:opacity-60"
                   />
 
                   <button
                     type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground"
+                    disabled={loading}
+                    onClick={() =>
+                      setShowPassword(
+                        (current) => !current,
+                      )
+                    }
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground disabled:pointer-events-none disabled:opacity-50"
                     aria-label={
                       showPassword
                         ? "Hide password"
@@ -167,6 +287,7 @@ export default function LoginPage() {
                 <input
                   id="remember"
                   type="checkbox"
+                  disabled={loading}
                   className="h-4 w-4 rounded border-input accent-primary"
                 />
 
@@ -181,13 +302,22 @@ export default function LoginPage() {
               {/* Submit */}
               <button
                 type="submit"
-                className="group relative h-12 w-full overflow-hidden rounded-xl bg-primary text-sm font-medium text-primary-foreground shadow-lg shadow-primary/20 transition-all hover:-translate-y-0.5 hover:shadow-xl hover:shadow-primary/25"
+                disabled={loading}
+                className="group relative h-12 w-full overflow-hidden rounded-xl bg-primary text-sm font-medium text-primary-foreground shadow-lg shadow-primary/20 transition-all hover:-translate-y-0.5 hover:shadow-xl hover:shadow-primary/25 disabled:cursor-not-allowed disabled:opacity-70"
               >
-                <span className="relative z-10">
-                  Sign in to AIFlow
+                <span className="relative z-10 flex items-center justify-center gap-2">
+                  {loading && (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  )}
+
+                  {loading
+                    ? "Signing in..."
+                    : "Sign in to AIFlow"}
                 </span>
 
-                <span className="absolute inset-0 -translate-x-full bg-white/10 transition-transform duration-500 group-hover:translate-x-0" />
+                {!loading && (
+                  <span className="absolute inset-0 -translate-x-full bg-white/10 transition-transform duration-500 group-hover:translate-x-0" />
+                )}
               </button>
             </form>
 
@@ -228,8 +358,8 @@ export default function LoginPage() {
 
           {/* Security text */}
           <p className="mt-5 text-center text-[11px] leading-5 text-muted-foreground/70">
-            By continuing, you agree to AIFlow's Terms of Service
-            and Privacy Policy.
+            By continuing, you agree to AIFlow's Terms of
+            Service and Privacy Policy.
           </p>
         </div>
       </section>

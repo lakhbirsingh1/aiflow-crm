@@ -17,17 +17,19 @@ export default function CampaignsPage() {
 
   return (
     <main className="w-full space-y-6">
-      <Header
-        search={search}
-        onSearchChange={setSearch}
-        status={status}
-        onStatusChange={setStatus}
-      />
+      <div className="mx-auto w-full max-w-[1200px] px-4 py-5 sm:px-6 lg:px-8">
+        <Header
+          search={search}
+          onSearchChange={setSearch}
+          status={status}
+          onStatusChange={setStatus}
+        />
 
-      <Table
-        search={search}
-        status={status}
-      />
+        <Table
+          search={search}
+          status={status}
+        />
+      </div>
     </main>
   );
 }

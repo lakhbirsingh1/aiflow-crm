@@ -1,28 +1,136 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
+import { AnimatePresence, motion } from "motion/react";
+import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
   Check,
   Eye,
   EyeOff,
+  Loader2,
   Moon,
   Sparkles,
   Sun,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+
 export default function SignupPage() {
   const { theme, setTheme } = useTheme();
-
+  const router = useRouter();
   const [mounted, setMounted] = useState(false);
+
   const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] =
+    useState(false);
+
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [terms, setTerms] = useState(false);
+
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState(false);
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  const handleSubmit = async (
+    event: FormEvent<HTMLFormElement>,
+  ) => {
+    event.preventDefault();
+
+    if (loading) {
+      return;
+    }
+
+    setError("");
+
+    const trimmedName = name.trim();
+    const trimmedEmail = email.trim().toLowerCase();
+
+    if (!trimmedName) {
+      setError("Please enter your full name.");
+      return;
+    }
+
+    if (!trimmedEmail) {
+      setError("Please enter your email address.");
+      return;
+    }
+
+    if (password.length < 8) {
+      setError("Password must be at least 8 characters.");
+      return;
+    }
+
+    if (!/\d/.test(password)) {
+      setError("Password must contain at least one number.");
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setError("Passwords do not match.");
+      return;
+    }
+
+    if (!terms) {
+      setError(
+        "Please accept the Terms of Service and Privacy Policy.",
+      );
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      const response = await fetch("/api/auth/signup", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: trimmedName,
+          email: trimmedEmail,
+          password,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(
+          data.message || "Unable to create your account.",
+        );
+      }
+
+      setSuccess(true);
+
+      setTimeout(() => {
+        router.push("/dashboard");
+        router.refresh();
+      }, 700);
+
+    } catch (error) {
+      console.error("Signup error:", error);
+
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Something went wrong. Please try again.",
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-background text-foreground">
@@ -52,7 +160,7 @@ export default function SignupPage() {
             </span>
           </Link>
 
-          {/* Actions */}
+          {/* Header actions */}
           <div className="flex items-center gap-2">
             <Link
               href="/"
@@ -63,12 +171,16 @@ export default function SignupPage() {
             </Link>
 
             {mounted && (
-              <button
+              <Button
                 type="button"
+                variant="outline"
+                size="icon"
                 onClick={() =>
-                  setTheme(theme === "dark" ? "light" : "dark")
+                  setTheme(
+                    theme === "dark" ? "light" : "dark",
+                  )
                 }
-                className="flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-background/70 text-muted-foreground backdrop-blur transition-all hover:bg-muted hover:text-foreground"
+                className="h-9 w-9 rounded-lg bg-background/70 text-muted-foreground backdrop-blur"
                 aria-label="Toggle theme"
               >
                 {theme === "dark" ? (
@@ -76,7 +188,7 @@ export default function SignupPage() {
                 ) : (
                   <Moon className="h-4 w-4" />
                 )}
-              </button>
+              </Button>
             )}
           </div>
         </div>
@@ -86,90 +198,210 @@ export default function SignupPage() {
       <section className="relative z-10 flex min-h-[calc(100vh-80px)] items-center justify-center px-6 py-12">
         <div className="w-full max-w-[450px]">
           {/* Intro */}
-          <div className="mb-7 text-center">
-            <div className="mx-auto mb-5 flex h-12 w-12 items-center justify-center rounded-2xl border border-border bg-card/80 shadow-sm backdrop-blur">
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{
+              duration: 0.35,
+              ease: "easeOut",
+            }}
+            className="mb-7 text-center"
+          >
+            <motion.div
+              initial={{
+                scale: 0.9,
+                opacity: 0,
+              }}
+              animate={{
+                scale: 1,
+                opacity: 1,
+              }}
+              transition={{
+                duration: 0.3,
+                delay: 0.05,
+              }}
+              className="mx-auto mb-5 flex h-12 w-12 items-center justify-center rounded-2xl border border-border bg-card/80 shadow-sm backdrop-blur"
+            >
               <Sparkles className="h-5 w-5 text-primary" />
-            </div>
+            </motion.div>
 
             <h1 className="text-3xl font-semibold tracking-[-0.03em] sm:text-4xl">
               Create your account
             </h1>
 
             <p className="mx-auto mt-3 max-w-sm text-sm leading-6 text-muted-foreground">
-              Start building smarter workflows with your AIFlow
-              workspace.
+              Start building smarter workflows with your
+              AIFlow workspace.
             </p>
-          </div>
+          </motion.div>
 
           {/* Signup Card */}
-          <div className="rounded-3xl border border-border/70 bg-card/80 p-6 shadow-2xl shadow-black/5 backdrop-blur-xl sm:p-8">
-            <form className="space-y-5">
+          <motion.div
+            initial={{
+              opacity: 0,
+              y: 16,
+            }}
+            animate={{
+              opacity: 1,
+              y: 0,
+            }}
+            transition={{
+              duration: 0.4,
+              delay: 0.05,
+              ease: "easeOut",
+            }}
+            className="rounded-3xl border border-border/70 bg-card/80 p-6 shadow-2xl shadow-black/5 backdrop-blur-xl sm:p-8"
+          >
+            <form
+              onSubmit={handleSubmit}
+              className="space-y-5"
+            >
+              {/* Error */}
+              <AnimatePresence mode="wait">
+                {error && (
+                  <motion.div
+                    initial={{
+                      opacity: 0,
+                      y: -6,
+                    }}
+                    animate={{
+                      opacity: 1,
+                      y: 0,
+                    }}
+                    exit={{
+                      opacity: 0,
+                      y: -6,
+                    }}
+                    transition={{
+                      duration: 0.2,
+                    }}
+                    role="alert"
+                    className="rounded-xl border border-destructive/20 bg-destructive/10 px-3 py-2.5 text-xs leading-5 text-destructive"
+                  >
+                    {error}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* Success */}
+              <AnimatePresence mode="wait">
+                {success && (
+                  <motion.div
+                    initial={{
+                      opacity: 0,
+                      scale: 0.98,
+                      y: -4,
+                    }}
+                    animate={{
+                      opacity: 1,
+                      scale: 1,
+                      y: 0,
+                    }}
+                    transition={{
+                      duration: 0.25,
+                    }}
+                    className="flex items-center gap-2 rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-3 py-2.5 text-xs leading-5 text-emerald-600 dark:text-emerald-400"
+                  >
+                    <Check className="h-4 w-4 shrink-0" />
+
+                    <span>
+                      Account created successfully.
+                      Redirecting...
+                    </span>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
               {/* Name */}
               <div className="space-y-2">
-                <label
-                  htmlFor="name"
-                  className="text-sm font-medium"
-                >
+                <Label htmlFor="name">
                   Full name
-                </label>
+                </Label>
 
-                <input
+                <Input
                   id="name"
                   name="name"
                   type="text"
                   placeholder="Your name"
                   autoComplete="name"
-                  required
-                  className="h-12 w-full rounded-xl border border-input bg-background/70 px-4 text-sm outline-none transition-all placeholder:text-muted-foreground/60 focus:border-primary focus:ring-4 focus:ring-primary/10"
+                  value={name}
+                  onChange={(event) => {
+                    setName(event.target.value);
+
+                    if (error) {
+                      setError("");
+                    }
+                  }}
+                  disabled={loading || success}
+                  className="h-12 rounded-xl bg-background/70"
                 />
               </div>
 
               {/* Email */}
               <div className="space-y-2">
-                <label
-                  htmlFor="email"
-                  className="text-sm font-medium"
-                >
+                <Label htmlFor="email">
                   Work email
-                </label>
+                </Label>
 
-                <input
+                <Input
                   id="email"
                   name="email"
                   type="email"
                   placeholder="you@company.com"
                   autoComplete="email"
-                  required
-                  className="h-12 w-full rounded-xl border border-input bg-background/70 px-4 text-sm outline-none transition-all placeholder:text-muted-foreground/60 focus:border-primary focus:ring-4 focus:ring-primary/10"
+                  value={email}
+                  onChange={(event) => {
+                    setEmail(event.target.value);
+
+                    if (error) {
+                      setError("");
+                    }
+                  }}
+                  disabled={loading || success}
+                  className="h-12 rounded-xl bg-background/70"
                 />
               </div>
 
               {/* Password */}
               <div className="space-y-2">
-                <label
-                  htmlFor="password"
-                  className="text-sm font-medium"
-                >
+                <Label htmlFor="password">
                   Password
-                </label>
+                </Label>
 
                 <div className="relative">
-                  <input
+                  <Input
                     id="password"
                     name="password"
-                    type={showPassword ? "text" : "password"}
+                    type={
+                      showPassword
+                        ? "text"
+                        : "password"
+                    }
                     placeholder="Create a password"
                     autoComplete="new-password"
-                    required
-                    className="h-12 w-full rounded-xl border border-input bg-background/70 px-4 pr-11 text-sm outline-none transition-all placeholder:text-muted-foreground/60 focus:border-primary focus:ring-4 focus:ring-primary/10"
+                    value={password}
+                    onChange={(event) => {
+                      setPassword(event.target.value);
+
+                      if (error) {
+                        setError("");
+                      }
+                    }}
+                    disabled={loading || success}
+                    className="h-12 rounded-xl bg-background/70 pr-11"
                   />
 
-                  <button
+                  <Button
                     type="button"
+                    variant="ghost"
+                    size="icon"
                     onClick={() =>
-                      setShowPassword(!showPassword)
+                      setShowPassword(
+                        (current) => !current,
+                      )
                     }
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground"
+                    disabled={loading || success}
+                    className="absolute right-1 top-1/2 h-10 w-10 -translate-y-1/2 text-muted-foreground hover:bg-transparent hover:text-foreground"
                     aria-label={
                       showPassword
                         ? "Hide password"
@@ -181,10 +413,9 @@ export default function SignupPage() {
                     ) : (
                       <Eye className="h-4 w-4" />
                     )}
-                  </button>
+                  </Button>
                 </div>
 
-                {/* Password hints */}
                 <div className="grid grid-cols-2 gap-x-4 gap-y-1 pt-1">
                   <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
                     <Check className="h-3 w-3 text-primary" />
@@ -200,15 +431,12 @@ export default function SignupPage() {
 
               {/* Confirm Password */}
               <div className="space-y-2">
-                <label
-                  htmlFor="confirmPassword"
-                  className="text-sm font-medium"
-                >
+                <Label htmlFor="confirmPassword">
                   Confirm password
-                </label>
+                </Label>
 
                 <div className="relative">
-                  <input
+                  <Input
                     id="confirmPassword"
                     name="confirmPassword"
                     type={
@@ -218,18 +446,31 @@ export default function SignupPage() {
                     }
                     placeholder="Repeat your password"
                     autoComplete="new-password"
-                    required
-                    className="h-12 w-full rounded-xl border border-input bg-background/70 px-4 pr-11 text-sm outline-none transition-all placeholder:text-muted-foreground/60 focus:border-primary focus:ring-4 focus:ring-primary/10"
+                    value={confirmPassword}
+                    onChange={(event) => {
+                      setConfirmPassword(
+                        event.target.value,
+                      );
+
+                      if (error) {
+                        setError("");
+                      }
+                    }}
+                    disabled={loading || success}
+                    className="h-12 rounded-xl bg-background/70 pr-11"
                   />
 
-                  <button
+                  <Button
                     type="button"
+                    variant="ghost"
+                    size="icon"
                     onClick={() =>
                       setShowConfirmPassword(
-                        !showConfirmPassword
+                        (current) => !current,
                       )
                     }
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground"
+                    disabled={loading || success}
+                    className="absolute right-1 top-1/2 h-10 w-10 -translate-y-1/2 text-muted-foreground hover:bg-transparent hover:text-foreground"
                     aria-label={
                       showConfirmPassword
                         ? "Hide password"
@@ -241,7 +482,7 @@ export default function SignupPage() {
                     ) : (
                       <Eye className="h-4 w-4" />
                     )}
-                  </button>
+                  </Button>
                 </div>
               </div>
 
@@ -250,7 +491,17 @@ export default function SignupPage() {
                 <input
                   id="terms"
                   type="checkbox"
-                  required
+                  checked={terms}
+                  onChange={(event) => {
+                    setTerms(
+                      event.target.checked,
+                    );
+
+                    if (error) {
+                      setError("");
+                    }
+                  }}
+                  disabled={loading || success}
                   className="mt-0.5 h-4 w-4 rounded border-input accent-primary"
                 />
 
@@ -277,16 +528,40 @@ export default function SignupPage() {
               </div>
 
               {/* Create Account */}
-              <button
-                type="submit"
-                className="group relative h-12 w-full overflow-hidden rounded-xl bg-primary text-sm font-medium text-primary-foreground shadow-lg shadow-primary/20 transition-all hover:-translate-y-0.5 hover:shadow-xl hover:shadow-primary/25"
+              <motion.div
+                whileTap={{
+                  scale:
+                    loading || success
+                      ? 1
+                      : 0.98,
+                }}
               >
-                <span className="relative z-10">
-                  Create AIFlow account
-                </span>
+                <Button
+                  type="submit"
+                  disabled={loading || success}
+                  className="group relative h-12 w-full overflow-hidden rounded-xl text-sm font-medium shadow-lg shadow-primary/20"
+                >
+                  <span className="relative z-10 flex items-center justify-center gap-2">
+                    {loading ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Creating account...
+                      </>
+                    ) : success ? (
+                      <>
+                        <Check className="h-4 w-4" />
+                        Account created
+                      </>
+                    ) : (
+                      "Create AIFlow account"
+                    )}
+                  </span>
 
-                <span className="absolute inset-0 -translate-x-full bg-white/10 transition-transform duration-500 group-hover:translate-x-0" />
-              </button>
+                  {!loading && !success && (
+                    <span className="absolute inset-0 -translate-x-full bg-white/10 transition-transform duration-500 group-hover:translate-x-0" />
+                  )}
+                </Button>
+              </motion.div>
             </form>
 
             {/* Divider */}
@@ -301,17 +576,19 @@ export default function SignupPage() {
             </div>
 
             {/* Google */}
-            <button
+            <Button
               type="button"
-              className="flex h-12 w-full items-center justify-center gap-3 rounded-xl border border-border bg-background/60 text-sm font-medium transition-all hover:bg-muted"
+              variant="outline"
+              disabled
+              className="h-12 w-full rounded-xl bg-background/60 text-sm font-medium"
             >
               <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white text-xs font-bold text-black">
                 G
               </span>
 
               Sign up with Google
-            </button>
-          </div>
+            </Button>
+          </motion.div>
 
           {/* Login */}
           <p className="mt-7 text-center text-sm text-muted-foreground">
@@ -326,8 +603,8 @@ export default function SignupPage() {
 
           {/* Security */}
           <p className="mt-5 text-center text-[11px] leading-5 text-muted-foreground/70">
-            Your data is protected with secure authentication and
-            privacy-first controls.
+            Your data is protected with secure authentication
+            and privacy-first controls.
           </p>
         </div>
       </section>

@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import "./globals.css";
+
 import { ThemeProvider } from "@/components/theme-provider";
 
 export const metadata: Metadata = {
-  title: "AIFlow",
-  description: "AI-powered workspace",
+  title: "AIFlow CRM",
+  description: "AI-powered sales CRM",
 };
 
 export default function RootLayout({
@@ -14,7 +15,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className="min-h-screen antialiased">
+      <body>
         <ThemeProvider>
           {children}
         </ThemeProvider>

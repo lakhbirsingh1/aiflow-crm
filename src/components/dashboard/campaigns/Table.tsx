@@ -210,7 +210,22 @@ function CampaignActions({
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger className="inline-flex size-8 shrink-0 items-center justify-center rounded-md text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+      {/* FIX:
+          DropdownMenuTrigger itself renders a button.
+          Button is passed through render so we don't create
+          a button inside another button.
+      */}
+      <DropdownMenuTrigger
+        render={
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="size-8 shrink-0"
+            aria-label={`Actions for ${campaign.name}`}
+          />
+        }
+      >
         <MoreHorizontal className="size-4" />
       </DropdownMenuTrigger>
 
@@ -219,7 +234,7 @@ function CampaignActions({
         className="w-44"
       >
         <DropdownMenuItem>
-          <Eye className="size-2.5" />
+          <Eye className="size-3" />
 
           <span className="text-xs">
             View Campaign
@@ -227,7 +242,7 @@ function CampaignActions({
         </DropdownMenuItem>
 
         <DropdownMenuItem>
-          <Pencil className="size-2.5" />
+          <Pencil className="size-3" />
 
           <span className="text-xs">
             Edit Campaign
@@ -236,9 +251,9 @@ function CampaignActions({
 
         <DropdownMenuItem>
           {isActive ? (
-            <Pause className="size-2.5" />
+            <Pause className="size-3" />
           ) : (
-            <Play className="size-2.5" />
+            <Play className="size-3" />
           )}
 
           <span className="text-xs">
@@ -249,7 +264,7 @@ function CampaignActions({
         </DropdownMenuItem>
 
         <DropdownMenuItem>
-          <Copy className="size-2.5" />
+          <Copy className="size-3" />
 
           <span className="text-xs">
             Duplicate Campaign
@@ -259,7 +274,7 @@ function CampaignActions({
         <DropdownMenuSeparator />
 
         <DropdownMenuItem>
-          <Trash2 className="size-2.5 text-destructive" />
+          <Trash2 className="size-3 text-destructive" />
 
           <span className="text-xs text-destructive">
             Delete Campaign
@@ -314,7 +329,7 @@ export default function Table({
       <div className="hidden overflow-x-auto md:block">
         <ShadcnTable>
           <TableHeader>
-            <TableRow>
+            <TableRow className="border-border/50 hover:bg-transparent">
               <TableHead className="min-w-[240px]">
                 Campaign
               </TableHead>
@@ -343,7 +358,7 @@ export default function Table({
                 Activity
               </TableHead>
 
-              <TableHead className="w-12" />
+              <TableHead className="w-12 text-right" />
             </TableRow>
           </TableHeader>
 
@@ -364,11 +379,12 @@ export default function Table({
                     duration: 0.2,
                     delay: index * 0.03,
                   }}
+                  className="border-border/40 transition-colors hover:bg-muted/30"
                 >
                   {/* Campaign */}
 
                   <TableCell>
-                    <div className="flex items-center gap-3">
+                    <div className="flex min-w-0 items-center gap-3">
                       <Button
                         type="button"
                         variant="outline"
@@ -387,10 +403,8 @@ export default function Table({
                           {campaign.name}
                         </p>
 
-                        <p className="text-xs text-muted-foreground">
-                          {
-                            campaign.channel
-                          }
+                        <p className="truncate text-xs text-muted-foreground">
+                          {campaign.channel}
                         </p>
                       </div>
                     </div>
@@ -473,7 +487,7 @@ export default function Table({
 
                   {/* Actions */}
 
-                  <TableCell>
+                  <TableCell className="text-right">
                     <CampaignActions
                       campaign={campaign}
                     />
@@ -550,7 +564,7 @@ export default function Table({
                       {campaign.name}
                     </p>
 
-                    <p className="text-xs text-muted-foreground">
+                    <p className="truncate text-xs text-muted-foreground">
                       {campaign.channel}
                     </p>
                   </div>
@@ -626,7 +640,7 @@ export default function Table({
                   }
                 />
 
-                <span className="text-xs text-muted-foreground">
+                <span className="whitespace-nowrap text-xs text-muted-foreground">
                   {
                     campaign.lastActivity
                   }
@@ -638,7 +652,7 @@ export default function Table({
 
         {filteredCampaigns.length ===
           0 && (
-            <div className="flex flex-col items-center justify-center gap-2">
+            <div className="flex min-h-32 flex-col items-center justify-center gap-2 px-4">
               <SearchX className="size-5 text-muted-foreground" />
 
               <span className="text-sm text-muted-foreground">

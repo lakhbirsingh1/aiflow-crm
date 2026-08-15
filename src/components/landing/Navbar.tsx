@@ -13,7 +13,7 @@ const navLinks = [
   { name: "AI Sales Agent", href: "#ai-sales-agent" },
   { name: "How It Works", href: "#how-it-works" },
   { name: "AI Radar", href: "#ai-radar" },
-  { name: "Pricing", href: "#pricing" }
+  { name: "Pricing", href: "#pricing" },
 ];
 
 export default function Navbar() {
@@ -25,12 +25,14 @@ export default function Navbar() {
     setTheme(theme === "dark" ? "light" : "dark");
   };
 
+  const closeMenu = () => {
+    setIsOpen(false);
+  };
+
   return (
     <nav className="fixed left-0 top-0 z-50 w-full border-b border-border bg-background/80 backdrop-blur-xl">
-
       {/* Desktop Navbar */}
       <div className="mx-auto grid h-16 max-w-7xl grid-cols-3 items-center px-6">
-
         {/* Logo */}
         <div className="justify-self-start">
           <Link
@@ -56,7 +58,6 @@ export default function Navbar() {
 
         {/* Desktop Actions */}
         <div className="hidden items-center justify-self-end gap-2 md:flex">
-
           {/* Theme Toggle */}
           <Button
             variant="ghost"
@@ -78,7 +79,7 @@ export default function Navbar() {
 
           {/* Get Started */}
           <Link
-            href="/dashboard"
+            href="/signup"
             className="inline-flex h-9 items-center justify-center rounded-md bg-foreground px-4 text-sm font-medium text-background transition-opacity hover:opacity-90"
           >
             Get Started
@@ -87,7 +88,6 @@ export default function Navbar() {
 
         {/* Mobile Actions */}
         <div className="col-start-3 flex items-center justify-self-end gap-1 md:hidden">
-
           {/* Theme Toggle */}
           <Button
             variant="ghost"
@@ -110,20 +110,50 @@ export default function Navbar() {
               {isOpen ? (
                 <motion.div
                   key="close"
-                  initial={{ rotate: -90, opacity: 0 }}
-                  animate={{ rotate: 0, opacity: 1 }}
-                  exit={{ rotate: 90, opacity: 0 }}
-                  transition={{ duration: 0.2 }}
+                  initial={{
+                    rotate: -90,
+                    opacity: 0,
+                    scale: 0.8,
+                  }}
+                  animate={{
+                    rotate: 0,
+                    opacity: 1,
+                    scale: 1,
+                  }}
+                  exit={{
+                    rotate: 90,
+                    opacity: 0,
+                    scale: 0.8,
+                  }}
+                  transition={{
+                    duration: 0.2,
+                    ease: "easeOut",
+                  }}
                 >
                   <X className="h-5 w-5" />
                 </motion.div>
               ) : (
                 <motion.div
                   key="menu"
-                  initial={{ rotate: 90, opacity: 0 }}
-                  animate={{ rotate: 0, opacity: 1 }}
-                  exit={{ rotate: -90, opacity: 0 }}
-                  transition={{ duration: 0.2 }}
+                  initial={{
+                    rotate: 90,
+                    opacity: 0,
+                    scale: 0.8,
+                  }}
+                  animate={{
+                    rotate: 0,
+                    opacity: 1,
+                    scale: 1,
+                  }}
+                  exit={{
+                    rotate: -90,
+                    opacity: 0,
+                    scale: 0.8,
+                  }}
+                  transition={{
+                    duration: 0.2,
+                    ease: "easeOut",
+                  }}
                 >
                   <Menu className="h-5 w-5" />
                 </motion.div>
@@ -137,30 +167,48 @@ export default function Navbar() {
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.25, ease: "easeOut" }}
-            className="border-t border-border bg-background md:hidden"
+            initial={{
+              opacity: 0,
+              height: 0,
+            }}
+            animate={{
+              opacity: 1,
+              height: "auto",
+            }}
+            exit={{
+              opacity: 0,
+              height: 0,
+            }}
+            transition={{
+              duration: 0.25,
+              ease: "easeOut",
+            }}
+            className="overflow-hidden border-t border-border bg-background md:hidden"
           >
             <div className="px-6 py-5">
-
-              {/* Mobile Links */}
+              {/* Mobile Navigation */}
               <div className="flex flex-col">
                 {navLinks.map((link, index) => (
                   <motion.div
                     key={link.name}
-                    initial={{ opacity: 0, x: -12 }}
-                    animate={{ opacity: 1, x: 0 }}
+                    initial={{
+                      opacity: 0,
+                      x: -12,
+                    }}
+                    animate={{
+                      opacity: 1,
+                      x: 0,
+                    }}
                     transition={{
-                      delay: index * 0.06,
+                      delay: index * 0.05,
                       duration: 0.2,
+                      ease: "easeOut",
                     }}
                   >
                     <Link
                       href={link.href}
-                      onClick={() => setIsOpen(false)}
-                      className="block border-b border-border py-4 text-base font-medium text-foreground"
+                      onClick={closeMenu}
+                      className="block border-b border-border py-4 text-base font-medium text-foreground transition-colors hover:text-primary"
                     >
                       {link.name}
                     </Link>
@@ -169,25 +217,40 @@ export default function Navbar() {
               </div>
 
               {/* Mobile Actions */}
-              <div className="mt-5 flex flex-col gap-3">
-
+              <motion.div
+                initial={{
+                  opacity: 0,
+                  y: 10,
+                }}
+                animate={{
+                  opacity: 1,
+                  y: 0,
+                }}
+                transition={{
+                  delay: 0.2,
+                  duration: 0.25,
+                  ease: "easeOut",
+                }}
+                className="mt-5 flex flex-col gap-3"
+              >
+                {/* Login */}
                 <Link
-                  href="/dashboard"
-                  onClick={() => setIsOpen(false)}
+                  href="/login"
+                  onClick={closeMenu}
                   className="flex h-11 items-center justify-center rounded-md border border-border text-sm font-medium text-foreground transition-colors hover:bg-muted"
                 >
                   Login
                 </Link>
 
+                {/* Get Started */}
                 <Link
-                  href="/dashboard"
-                  onClick={() => setIsOpen(false)}
+                  href="/signup"
+                  onClick={closeMenu}
                   className="flex h-11 items-center justify-center rounded-md bg-foreground text-sm font-medium text-background transition-opacity hover:opacity-90"
                 >
                   Get Started
                 </Link>
-
-              </div>
+              </motion.div>
             </div>
           </motion.div>
         )}
