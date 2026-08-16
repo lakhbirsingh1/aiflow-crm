@@ -134,13 +134,20 @@ export default function LoginPage() {
         );
       }
 
-      router.push("/dashboard");
-      router.refresh();
-    } catch (error) {
-      console.error(
-        "Login error:",
-        error,
-      );
+    //   router.push("/dashboard");
+    //   router.refresh();
+    // } catch (error) {
+    //   console.error(
+    //     "Login error:",
+    //     error,
+    //   );
+
+      window.location.href = "/dashboard";
+} catch (error) {
+  console.error(
+    "Login error:",
+    error,
+  );
 
       setError(
         error instanceof Error
